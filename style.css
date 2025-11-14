@@ -89,3 +89,174 @@ button:hover {
     color: #444;
     margin-top: 10px;
 }
+/* ========================
+   GAYA UMUM (Opsional, sesuaikan dengan website Anda)
+   ======================== */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+.container {
+    max-width: 960px; /* Lebar maksimal konten */
+    margin: 20px auto; /* Rata tengah dengan jarak atas-bawah */
+    padding: 0 20px;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-family: 'Montserrat', sans-serif; /* Menggunakan font Montserrat */
+    font-weight: 700; /* Bold */
+}
+
+.description {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* ========================
+   GAYA NAVIGASI (Sesuaikan dengan yang sudah ada di website Anda)
+   ======================== */
+header {
+    background-color: #2c3e50; /* Warna gelap untuk header */
+    padding: 15px 0;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+nav ul li {
+    display: inline-block;
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 5px 10px;
+    transition: background-color 0.3s ease;
+}
+
+nav ul li a:hover {
+    background-color: #34495e;
+    border-radius: 5px;
+}
+
+
+/* ========================
+   GAYA TABEL HARGA
+   ======================== */
+.pricing-table {
+    margin: 40px 0;
+    overflow-x: auto; /* Mengatasi tabel terlalu lebar di layar kecil */
+}
+
+.pricing-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #f4f7f5;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden; /* Penting untuk radius di tabel */
+}
+
+.pricing-table th, .pricing-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.pricing-table th {
+    background-color: #00ff2f; /* Warna biru untuk header tabel */
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.pricing-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* Warna selang-seling */
+}
+
+.pricing-table tbody tr:hover {
+    background-color: #f0f8ff; /* Efek hover pada baris */
+}
+
+
+/* ========================
+   GAYA GALERI FOTO
+   ======================== */
+.gallery {
+    display: flex; /* Menggunakan Flexbox untuk berjajar */
+    justify-content: center; /* Rata tengah secara horizontal */
+    flex-wrap: wrap; /* Memungkinkan gambar pindah baris jika tidak muat */
+    gap: 20px; /* Jarak antar gambar */
+    margin: 40px 0;
+}
+
+.gallery img {
+    width: 30%; /* Setiap gambar mengambil 30% lebar */
+    max-width: 300px; /* Batasan lebar maksimal per gambar */
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease; /* Efek zoom saat hover */
+}
+
+.gallery img:hover {
+    transform: scale(1.03); /* Sedikit zoom saat di-hover */
+}
+
+/* Responsif untuk gambar di layar kecil */
+@media (max-width: 768px) {
+    .gallery img {
+        width: 45%; /* Di layar kecil, dua gambar per baris */
+    }
+}
+
+@media (max-width: 480px) {
+    .gallery img {
+        width: 90%; /* Di layar sangat kecil, satu gambar per baris */
+    }
+}
+
+
+/* ========================
+   GAYA SLOGAN DI BAWAH FOTO
+   ======================== */
+.slogan-page {
+    font-family: sans-serif; /* Menggunakan font Montserrat */
+    font-weight: 900; /* Ketebalan Black untuk kesan tegas */
+    font-size: 2.2rem; /* Ukuran font besar */
+    text-align: center; /* Rata tengah teks di dalam elemen */
+    color: #58846c; /* Warna biru, bisa disesuaikan */
+    margin-top: 30px; /* Jarak dari galeri di atasnya */
+    padding-bottom: 50px; /* Jarak bawah jika ada footer */
+    text-transform: uppercase; /* Membuat huruf kapital semua */
+    letter-spacing: 2px; /* Jarak antar huruf */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Sedikit bayangan pada teks */
+}
+
+/* Responsif untuk slogan di layar kecil */
+@media (max-width: 768px) {
+    .slogan-page {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .slogan-page {
+        font-size: 1.4rem;
+    }
+}
