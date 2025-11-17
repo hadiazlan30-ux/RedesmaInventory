@@ -1,20 +1,31 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-R">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Stok (Supabase) - Redesma V2</title>
+    <title>Sistem Stok (Supabase) - V4 (CSS Kustom)</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/1.0.6/css/solid.min.css">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .hidden { display: none; }
+        /* Menggunakan font Inter sebagai default */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #F3F4F6; /* bg-gray-100 */
+        }
+        
+        /* Loading Spinner */
         .loader {
             border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
+            border-top: 5px solid #2563EB; /* Warna primer */
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -24,19 +35,165 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Style untuk tombol delete */
-        .delete-btn {
-            background: none;
+
+        /* 1. Komponen Card */
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.5rem; /* 8px */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #E5E7EB; /* border-gray-200 */
+            overflow: hidden; /* Menjaga sudut bulat */
+        }
+        .card-header {
+            padding: 1.5rem; /* p-6 */
+            border-bottom: 1px solid #E5E7EB;
+        }
+        .card-body {
+            padding: 1.5rem; /* p-6 */
+        }
+        .card-title {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #1F2937; /* text-gray-800 */
+            margin-bottom: 1rem;
+        }
+
+        /* 2. Komponen Form */
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem; /* mb-2 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #4B5563; /* text-gray-600 */
+        }
+        .form-input,
+        .form-select {
+            display: block;
+            width: 100%;
+            border: 1px solid #D1D5DB; /* border-gray-300 */
+            border-radius: 0.375rem; /* 6px */
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+        }
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #2563EB; /* Warna primer */
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); /* Efek ring */
+        }
+
+        /* 3. Komponen Tombol (Button) */
+        .btn {
+            display: inline-block;
+            width: 100%; /* Default tombol adalah full-width */
+            padding: 0.75rem 1.5rem;
             border: none;
+            border-radius: 0.375rem; /* 6px */
+            font-weight: 600;
             cursor: pointer;
-            color: #EF4444; /* red-500 */
+            text-align: center;
+            transition: all 0.2s ease-in-out;
         }
-        .delete-btn:hover {
-            color: #B91C1C; /* red-700 */
+        .btn-primary {
+            background-color: #2563EB; /* blue-600 */
+            color: white;
         }
+        .btn-primary:hover { background-color: #1D4ED8; } /* blue-700 */
+
+        .btn-success {
+            background-color: #16A34A; /* green-600 */
+            color: white;
+        }
+        .btn-success:hover { background-color: #15803D; } /* green-700 */
+
+        .btn-error {
+            background-color: #DC2626; /* red-600 */
+            color: white;
+        }
+        .btn-error:hover { background-color: #B91C1C; } /* red-700 */
+        
+        /* 4. Komponen Alert (Notifikasi) */
+        #message-box-container {
+            position: fixed;
+            top: 1.25rem; /* top-5 */
+            right: 1.25rem; /* right-5 */
+            z-index: 50;
+            max-width: 24rem; /* max-w-sm */
+            display: flex;
+            flex-direction: column;
+            gap: 1rem; /* Jarak antar notifikasi */
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+        }
+        .alert-icon {
+            flex-shrink: 0;
+            width: 1.5rem; /* w-6 */
+            height: 1.5rem; /* h-6 */
+            margin-right: 0.75rem; /* mr-3 */
+        }
+        .alert-success {
+            background-color: #D1FAE5; /* green-100 */
+            color: #065F46; /* green-800 */
+        }
+        .alert-error {
+            background-color: #FEE2E2; /* red-100 */
+            color: #991B1B; /* red-800 */
+        }
+
+        /* 5. Komponen Tabel Kustom */
+        .custom-table {
+            width: 100%;
+            min-width: 640px; /* min-w-full */
+            border-collapse: collapse;
+        }
+        .custom-table thead {
+            background-color: #F9FAFB; /* bg-gray-50 */
+        }
+        .custom-table th {
+            padding: 0.75rem 1.5rem; /* px-6 py-3 */
+            text-align: left;
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 600; /* font-semibold */
+            color: #6B7280; /* text-gray-500 */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .custom-table tbody tr {
+            border-bottom: 1px solid #E5E7EB; /* border-gray-200 */
+        }
+        .custom-table tbody tr:nth-child(even) {
+            background-color: #F9FAFB; /* Zebra stripe */
+        }
+        .custom-table td {
+            padding: 1rem 1.5rem; /* px-6 py-4 */
+            font-size: 0.875rem; /* text-sm */
+            color: #374151; /* text-gray-700 */
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.75em;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border-radius: 9999px; /* rounded-full */
+        }
+        .badge-success {
+            background-color: #D1FAE5; /* green-100 */
+            color: #065F46; /* green-800 */
+        }
+        .badge-error {
+            background-color: #FEE2E2; /* red-100 */
+            color: #991B1B; /* red-800 */
+        }
+        
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="text-gray-800">
 
     <div class="container mx-auto p-4 md:p-8">
 
@@ -44,201 +201,220 @@
             <div class="loader"></div>
         </div>
 
-        <div id="message-box" class="hidden fixed top-5 right-5 z-50 p-4 rounded-lg shadow-md max-w-sm"></div>
+        <div id="message-box-container">
+            </div>
 
         <div id="auth-container" class="hidden max-w-md mx-auto mt-10">
-            <div class="bg-white p-8 rounded-lg shadow-lg">
-                <img src="https://placehold.co/300x80/003366/FFFFFF?text=Perusahaan+Redesma" alt="Logo Perusahaan Redesma" class="mx-auto mb-6 rounded">
-                
-                <form id="login-form">
-                    <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Login Sistem Stok</h2>
-                    <div class="mb-4">
-                        <label for="login-email" class="block text-sm font-medium text-gray-600 mb-2">Email</label>
-                        <input type="email" id="login-email" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="mb-6">
-                        <label for="login-password" class="block text-sm font-medium text-gray-600 mb-2">Password</label>
-                        <input type="password" id="login-password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-200">
-                        Masuk
-                    </button>
-                    <p class="text-center text-sm text-gray-500 mt-4">
-                        Belum punya akun? 
-                        <a href="#" id="show-register" class="text-blue-600 hover:underline">Daftar di sini</a>
-                    </p>
-                </form>
+            <div class="card">
+                <div class="card-body">
+                    <img src="https://placehold.co/300x80/003366/FFFFFF?text=Perusahaan+Redesma" alt="Logo Perusahaan Redesma" class="mx-auto mb-6 rounded">
+                    
+                    <form id="login-form">
+                        <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Login Sistem Stok</h2>
+                        <div class="mb-4">
+                            <label for="login-email" class="form-label">Email</label>
+                            <input type="email" id="login-email" required class="form-input">
+                        </div>
+                        <div class="mb-6">
+                            <label for="login-password" class="form-label">Password</label>
+                            <input type="password" id="login-password" required class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            Masuk
+                        </button>
+                        <p class="text-center text-sm text-gray-500 mt-4">
+                            Belum punya akun? 
+                            <a href="#" id="show-register" class="text-blue-600 hover:underline font-medium">Daftar di sini</a>
+                        </p>
+                    </form>
 
-                <form id="register-form" class="hidden">
-                    <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Daftar Akun Baru</h2>
-                    <div class="mb-4">
-                        <label for="register-email" class="block text-sm font-medium text-gray-600 mb-2">Email</label>
-                        <input type="email" id="register-email" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="mb-6">
-                        <label for="register-password" class="block text-sm font-medium text-gray-600 mb-2">Password</label>
-                        <input type="password" id="register-password" required class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-200">
-                        Daftar
-                    </button>
-                    <p class="text-center text-sm text-gray-500 mt-4">
-                        Sudah punya akun? 
-                        <a href="#" id="show-login" class="text-blue-600 hover:underline">Login di sini</a>
-                    </p>
-                </form>
+                    <form id="register-form" class="hidden">
+                        <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Daftar Akun Baru</h2>
+                        <div class="mb-4">
+                            <label for="register-email" class="form-label">Email</label>
+                            <input type="email" id="register-email" required class="form-input">
+                        </div>
+                        <div class="mb-6">
+                            <label for="register-password" class="form-label">Password</label>
+                            <input type="password" id="register-password" required class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            Daftar
+                        </button>
+                        <p class="text-center text-sm text-gray-500 mt-4">
+                            Sudah punya akun? 
+                            <a href="#" id="show-login" class="text-blue-600 hover:underline font-medium">Login di sini</a>
+                        </p>
+                    </form>
+                </div>
             </div>
         </div>
 
         <div id="dashboard-container" class="hidden">
             <header class="flex flex-wrap justify-between items-center mb-6 p-4 bg-white rounded-lg shadow">
                 <h1 class="text-3xl font-bold text-blue-800">Dashboard Stok Redesma</h1>
-                <div>
-                    <span id="user-email" class="text-gray-600 mr-4"></span>
-                    <button id="logout-button" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-                        Logout
+                <div class="flex items-center">
+                    <span id="user-email" class="text-gray-600 mr-4 hidden md:block"></span>
+                    <button id="logout-button" class="btn btn-error py-2 px-4 w-auto"> Logout
                     </button>
                 </div>
             </header>
 
-            <div class="bg-white p-6 rounded-lg shadow mb-6">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Grafik Stok Barang (Saat Ini)</h2>
-                <div class="h-64 md:h-80">
-                    <canvas id="inventoryChart"></canvas>
+            <div class="card mb-6">
+                <div class="card-body">
+                    <h2 class="card-title">Grafik Stok Barang (Saat Ini)</h2>
+                    <div class="h-64 md:h-80">
+                        <canvas id="inventoryChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="md:col-span-1 bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-xl font-semibold mb-4 text-blue-700">Manajemen Master Barang</h2>
-                    <form id="form-master-barang" class="space-y-4">
-                        <div>
-                            <label for="master-id" class="block text-sm font-medium text-gray-600">ID Barang (Unik)</label>
-                            <input type="text" id="master-id" placeholder="Contoh: B001, A002" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label for="master-nama" class="block text-sm font-medium text-gray-600">Nama Barang</label>
-                            <input type="text" id="master-nama" placeholder="Contoh: Baut 10mm, Kabel Merah" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                            Tambah Master Barang
-                        </button>
-                    </form>
+                <div class="md:col-span-1 card">
+                    <div class="card-body">
+                        <h2 class="card-title">Manajemen Master Barang</h2>
+                        <form id="form-master-barang" class="space-y-4">
+                            <div>
+                                <label for="master-id" class="form-label">ID Barang (Unik)</label>
+                                <input type="text" id="master-id" placeholder="Contoh: B001, A002" required class="form-input">
+                            </div>
+                            <div>
+                                <label for="master-nama" class="form-label">Nama Barang</label>
+                                <input type="text" id="master-nama" placeholder="Contoh: Baut 10mm" required class="form-input">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                Tambah Master Barang
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <div class="md:col-span-2 bg-white p-6 rounded-lg shadow overflow-x-auto">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-700">List Master Barang</h2>
-                    <div class="max-h-64 overflow-y-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Barang</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-master-barang" class="bg-white divide-y divide-gray-200">
-                                <tr><td colspan="3" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
-                            </tbody>
-                        </table>
+                <div class="md:col-span-2 card">
+                    <div class="card-body">
+                        <h2 class="card-title">List Master Barang</h2>
+                        <div class="max-h-64 overflow-y-auto">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Barang</th>
+                                        <th>Nama Barang</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-master-barang">
+                                    <tr><td colspan="3" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-xl font-semibold mb-4 text-green-700">Input Barang Masuk</h2>
-                    <form id="form-barang-masuk" class="space-y-4">
-                        <div>
-                            <label for="masuk-id" class="block text-sm font-medium text-gray-600">Pilih Barang</label>
-                            <select id="masuk-id" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                                <option value="">Memuat barang...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="masuk-kuantitas" class="block text-sm font-medium text-gray-600">Kuantitas</label>
-                            <input type="number" id="masuk-kuantitas" min="1" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-                        </div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                            Tambah Masuk
-                        </button>
-                    </form>
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-green-700">Input Barang Masuk</h2>
+                        <form id="form-barang-masuk" class="space-y-4">
+                            <div>
+                                <label for="masuk-id" class="form-label">Pilih Barang</label>
+                                <select id="masuk-id" required class="form-select">
+                                    <option value="">Memuat barang...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="masuk-kuantitas" class="form-label">Kuantitas</label>
+                                <input type="number" id="masuk-kuantitas" min="1" required class="form-input">
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                Tambah Masuk
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-xl font-semibold mb-4 text-red-700">Input Barang Keluar</h2>
-                    <form id="form-barang-keluar" class="space-y-4">
-                        <div>
-                            <label for="keluar-id" class="block text-sm font-medium text-gray-600">Pilih Barang</label>
-                            <select id="keluar-id" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
-                                <option value="">Memuat barang...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="keluar-kuantitas" class="block text-sm font-medium text-gray-600">Kuantitas</label>
-                            <input type="number" id="keluar-kuantitas" min="1" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
-                        </div>
-                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200">
-                            Tambah Keluar
-                        </button>
-                    </form>
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-red-700">Input Barang Keluar</h2>
+                        <form id="form-barang-keluar" class="space-y-4">
+                            <div>
+                                <label for="keluar-id" class="form-label">Pilih Barang</label>
+                                <select id="keluar-id" required class="form-select">
+                                    <option value="">Memuat barang...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="keluar-kuantitas" class="form-label">Kuantitas</label>
+                                <input type="number" id="keluar-kuantitas" min="1" required class="form-input">
+                            </div>
+                            <button type="submit" class="btn btn-error">
+                                Tambah Keluar
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-lg shadow mb-6">
-                <label for="search-bar" class="block text-sm font-medium text-gray-600 mb-2">
-                    🔍 Cari Cepat Riwayat (Berdasarkan ID atau Nama Barang)
-                </label>
-                <input type="text" id="search-bar" placeholder="Ketik ID (B001) atau Nama (Baut)..." class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="card mb-6">
+                <div class="card-body">
+                    <label for="search-bar" class="form-label">
+                        🔍 Cari Cepat Riwayat (Berdasarkan ID atau Nama Barang)
+                    </label>
+                    <input type="text" id="search-bar" placeholder="Ketik ID (B001) atau Nama (Baut)..." class="form-input">
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
-                    <h2 class="text-xl font-semibold mb-4 text-green-700">Data Barang Masuk</h2>
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Barang</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kuantitas</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Masuk</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-barang-masuk" class="bg-white divide-y divide-gray-200">
-                            <tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-green-700">Data Barang Masuk</h2>
+                        <div class="overflow-x-auto">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>ID Barang</th>
+                                        <th>Nama Barang</th>
+                                        <th>Kuantitas</th>
+                                        <th>Tanggal Masuk</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-barang-masuk">
+                                    <tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-lg shadow overflow-x-auto">
-                    <h2 class="text-xl font-semibold mb-4 text-red-700">Data Barang Keluar</h2>
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Barang</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th> <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kuantitas</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Keluar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-barang-keluar" class="bg-white divide-y divide-gray-200">
-                                <tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-red-700">Data Barang Keluar</h2>
+                        <div class="overflow-x-auto">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>ID Barang</th>
+                                        <th>Nama Barang</th>
+                                        <th>Kuantitas</th>
+                                        <th>Tanggal Keluar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-barang-keluar">
+                                        <tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
         </div> </div> <script type="module">
         // 4. Supabase Import
-        // Ini berfungsi karena kita sudah memuat script Supabase di <head>
         const { createClient } = supabase;
 
-        
         // ===================================================================
         // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-        //
-        //          KONFIGURASI SUPABASE ANDA SUDAH SAYA MASUKKAN
-        //
-        // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+        //          KONFIGURASI SUPABASE ANDA
         // ===================================================================
 
         const supabaseUrl = "https://kcwxjwtvjsdgobeygiau.supabase.co"; // <-- SUDAH DISET
@@ -254,15 +430,15 @@
         console.log('Supabase client initialized');
 
         // Variabel Global
-        let currentChart = null; // Menyimpan instance chart
-        let realtimeChannel = null; // Menyimpan channel realtime
-        let masterBarangList = []; // (BARU) Menyimpan cache master barang
+        let currentChart = null; 
+        let realtimeChannel = null; 
+        let masterBarangList = []; 
 
         // DOM Elements
         const loadingSpinner = document.getElementById('loading-spinner');
         const authContainer = document.getElementById('auth-container');
         const dashboardContainer = document.getElementById('dashboard-container');
-        const messageBox = document.getElementById('message-box');
+        const messageBoxContainer = document.getElementById('message-box-container'); // (DIUBAH)
         
         // Auth Forms
         const loginForm = document.getElementById('login-form');
@@ -276,7 +452,7 @@
         const chartCanvas = document.getElementById('inventoryChart').getContext('2d');
         const searchBar = document.getElementById('search-bar');
         
-        // (BARU) Master Barang
+        // Master Barang
         const formMasterBarang = document.getElementById('form-master-barang');
         const tableMasterBarang = document.getElementById('table-master-barang');
         const selectMasukId = document.getElementById('masuk-id');
@@ -292,16 +468,29 @@
 
         // === Fungsi Helper ===
         
-        /** Menampilkan pesan notifikasi */
+        /** (DIPERBARUI) Menampilkan pesan notifikasi kustom */
         function showMessage(message, isError = false) {
-            messageBox.textContent = message;
-            messageBox.className = 'hidden'; // Reset
-            messageBox.classList.add(isError ? 'bg-red-200' : 'bg-green-200');
-            messageBox.classList.add(isError ? 'text-red-800' : 'text-green-800');
-            messageBox.classList.remove('hidden');
+            const alertType = isError ? 'alert-error' : 'alert-success';
+            const iconSvg = isError 
+                ? `<svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`
+                : `<svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`;
+
+            // Buat elemen alert baru
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${alertType}`;
+            alertDiv.innerHTML = `
+                ${iconSvg}
+                <span class="font-medium">${message}</span>
+            `;
             
+            // Tambahkan ke kontainer
+            messageBoxContainer.appendChild(alertDiv);
+            
+            // Hapus setelah 3 detik
             setTimeout(() => {
-                messageBox.classList.add('hidden');
+                alertDiv.style.transition = 'opacity 0.5s ease-out';
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 500); // Hapus dari DOM
             }, 3000);
         }
 
@@ -318,19 +507,16 @@
             });
         }
 
-        /** (BARU) Memfilter tabel riwayat berdasarkan input pencarian */
+        /** Memfilter tabel riwayat berdasarkan input pencarian */
         function filterTables() {
             const searchTerm = searchBar.value.trim().toUpperCase();
             
-            // Fungsi internal untuk memfilter satu tabel
             const filterTBody = (tbody) => {
                 const rows = tbody.querySelectorAll('tr');
                 rows.forEach(row => {
-                    // Kolom ID Barang (index 1), Nama Barang (index 2)
                     const idCell = row.querySelector('td:nth-child(2)');
                     const nameCell = row.querySelector('td:nth-child(3)');
                     
-                    // Lewati jika baris 'no data' atau 'loading'
                     if (!idCell || !nameCell) {
                         row.style.display = '';
                         return;
@@ -340,28 +526,27 @@
                     const namaBarang = nameCell.textContent.toUpperCase();
 
                     if (idBarang.includes(searchTerm) || namaBarang.includes(searchTerm)) {
-                        row.style.display = ''; // Tampilkan baris
+                        row.style.display = '';
                     } else {
-                        row.style.display = 'none'; // Sembunyikan baris
+                        row.style.display = 'none';
                     }
                 });
             };
 
-            // Terapkan filter ke kedua tabel
             filterTBody(tableBarangMasuk);
             filterTBody(tableBarangKeluar);
         }
 
         // === Fungsi Logika Utama ===
 
-        /** (BARU) 1. Mengambil data Master Barang */
+        /** 1. Mengambil data Master Barang */
         async function loadMasterBarang() {
             console.log("Fetching master barang...");
             try {
                 const { data, error } = await db.from('master_barang').select('*').order('id_barang', { ascending: true });
                 if (error) throw error;
                 
-                masterBarangList = data; // Simpan di cache
+                masterBarangList = data; 
                 
                 renderMasterBarangTable(masterBarangList);
                 populateDropdowns(masterBarangList);
@@ -372,12 +557,10 @@
             }
         }
 
-        /** (BARU) 2. Mengambil data Transaksi (Masuk & Keluar) */
+        /** 2. Mengambil data Transaksi (Masuk & Keluar) */
         async function fetchTransactionData() {
             console.log("Fetching transaction data...");
             try {
-                // Ambil data masuk dan keluar secara paralel
-                // (BARU) Gunakan JOIN (select) untuk mengambil nama_barang dari master_barang
                 const [masukResponse, keluarResponse] = await Promise.all([
                     db.from('barang_masuk').select('*, master_barang(nama_barang)').order('tanggal', { ascending: false }),
                     db.from('barang_keluar').select('*, master_barang(nama_barang)').order('tanggal', { ascending: false })
@@ -389,26 +572,20 @@
                 const dataMasuk = masukResponse.data;
                 const dataKeluar = keluarResponse.data;
 
-                // Render data ke UI
                 renderTabelMasuk(dataMasuk);
                 renderTabelKeluar(dataKeluar);
                 updateChart(dataMasuk, dataKeluar);
-
-                // Terapkan filter yang mungkin sudah ada
                 filterTables();
 
-            } catch (error) {
+            } catch (error)
+            {
                 console.error("Error fetching data:", error);
                 showMessage(`Gagal memuat data transaksi: ${error.message}`, true);
             }
         }
         
-        /**
-         * (BARU) Mengatur "pendengar" (listener) data real-time dari Supabase.
-         * Sekarang mendengarkan 3 tabel.
-         */
+        /** Mengatur listener data real-time */
         function setupDataListeners() {
-            // Hentikan listener lama jika ada
             if (realtimeChannel) {
                 realtimeChannel.unsubscribe();
             }
@@ -417,13 +594,13 @@
             
             realtimeChannel = db.channel('public-changes')
                 .on('postgres_changes', { 
-                    event: '*', // Apapun (INSERT, UPDATE, DELETE)
+                    event: '*', 
                     schema: 'public', 
                     table: 'master_barang' 
                 }, (payload) => {
                     console.log('Perubahan master_barang terdeteksi!', payload);
                     showMessage("Data master barang berubah, memuat ulang...", false);
-                    loadMasterBarang(); // Muat ulang master list
+                    loadMasterBarang();
                 })
                 .on('postgres_changes', { 
                     event: 'INSERT', 
@@ -432,7 +609,7 @@
                 }, (payload) => {
                     console.log('Perubahan barang_masuk terdeteksi!', payload);
                     showMessage("Data masuk baru terdeteksi, memuat ulang...", false);
-                    fetchTransactionData(); // Muat ulang data transaksi
+                    fetchTransactionData();
                 })
                 .on('postgres_changes', { 
                     event: 'INSERT', 
@@ -441,7 +618,7 @@
                 }, (payload) => {
                     console.log('Perubahan barang_keluar terdeteksi!', payload);
                     showMessage("Data keluar baru terdeteksi, memuat ulang...", false);
-                    fetchTransactionData(); // Muat ulang data transaksi
+                    fetchTransactionData();
                 })
                 .subscribe((status, err) => {
                     if (status === 'SUBSCRIBED') {
@@ -460,12 +637,12 @@
                 realtimeChannel = null;
                 console.log("Realtime listeners stopped.");
             }
-            masterBarangList = []; // Kosongkan cache
+            masterBarangList = [];
         }
 
         // === Fungsi Render ===
 
-        /** (BARU) Render data ke tabel master barang */
+        /** Render data ke tabel master barang */
         function renderMasterBarangTable(data) {
             tableMasterBarang.innerHTML = '';
             if (!data || data.length === 0) {
@@ -475,10 +652,10 @@
             data.forEach(item => {
                 const row = `
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium">${item.id_barang}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${item.nama_barang}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button class="delete-btn" data-id="${item.id_barang}" title="Hapus ${item.nama_barang}">
+                        <td class="font-medium">${item.id_barang}</td>
+                        <td>${item.nama_barang}</td>
+                        <td>
+                            <button class="delete-btn p-1 text-red-600 hover:text-red-800" data-id="${item.id_barang}" title="Hapus ${item.nama_barang}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                   <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                 </svg>
@@ -489,19 +666,18 @@
                 tableMasterBarang.innerHTML += row;
             });
 
-            // (BARU) Tambahkan event listener untuk tombol delete
             tableMasterBarang.querySelectorAll('.delete-btn').forEach(button => {
                 button.addEventListener('click', handleDeleteMasterBarang);
             });
         }
 
-        /** (BARU) Isi dropdown form masuk & keluar */
+        /** Isi dropdown form masuk & keluar */
         function populateDropdowns(data) {
             selectMasukId.innerHTML = '';
             selectKeluarId.innerHTML = '';
 
             if (!data || data.length === 0) {
-                const noDataOption = '<option value="">Silakan tambah Master Barang dulu</option>';
+                const noDataOption = '<option value="">Tambah Master Barang dulu</option>';
                 selectMasukId.innerHTML = noDataOption;
                 selectKeluarId.innerHTML = noDataOption;
                 return;
@@ -518,7 +694,7 @@
             });
         }
 
-        /** (DIPERBARUI) Render data ke tabel barang masuk (dengan nama barang) */
+        /** Render data ke tabel barang masuk */
         function renderTabelMasuk(data) {
             tableBarangMasuk.innerHTML = '';
             if (!data || data.length === 0) {
@@ -526,22 +702,21 @@
                 return;
             }
             data.forEach((item, index) => {
-                // (BARU) Ambil nama barang dari data join
-                const namaBarang = item.master_barang ? item.master_barang.nama_barang : '(Data Master Hilang)';
+                const namaBarang = item.master_barang ? item.master_barang.nama_barang : '(Data Hilang)';
                 const row = `
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${index + 1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium">${item.id_barang}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${namaBarang}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-green-600 font-bold">+${item.kuantitas}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatTanggal(item.tanggal)}</td>
+                        <td class="font-medium">${index + 1}</td>
+                        <td class="font-medium">${item.id_barang}</td>
+                        <td>${namaBarang}</td>
+                        <td><span class="badge badge-success">+${item.kuantitas}</span></td>
+                        <td class="text-sm text-gray-500">${formatTanggal(item.tanggal)}</td>
                     </tr>
                 `;
                 tableBarangMasuk.innerHTML += row;
             });
         }
 
-        /** (DIPERBARUI) Render data ke tabel barang keluar (dengan nama barang) */
+        /** Render data ke tabel barang keluar */
         function renderTabelKeluar(data) {
             tableBarangKeluar.innerHTML = '';
             if (!data || data.length === 0) {
@@ -549,15 +724,14 @@
                 return;
             }
             data.forEach((item, index) => {
-                // (BARU) Ambil nama barang dari data join
-                const namaBarang = item.master_barang ? item.master_barang.nama_barang : '(Data Master Hilang)';
+                const namaBarang = item.master_barang ? item.master_barang.nama_barang : '(Data Hilang)';
                 const row = `
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">${index + 1}</td>
-                        <td class="px-6 py-4 whitespace-nowrap font-medium">${item.id_barang}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">${namaBarang}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-red-600 font-bold">-${item.kuantitas}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatTanggal(item.tanggal)}</td>
+                        <td class="font-medium">${index + 1}</td>
+                        <td class="font-medium">${item.id_barang}</td>
+                        <td>${namaBarang}</td>
+                        <td><span class="badge badge-error">-${item.kuantitas}</span></td>
+                        <td class="text-sm text-gray-500">${formatTanggal(item.tanggal)}</td>
                     </tr>
                 `;
                 tableBarangKeluar.innerHTML += row;
@@ -568,22 +742,18 @@
         function updateChart(dataMasuk, dataKeluar) {
             const stokAkhir = {};
 
-            // 1. Hitung total barang masuk
             (dataMasuk || []).forEach(item => {
                 const id = item.id_barang.toUpperCase();
                 stokAkhir[id] = (stokAkhir[id] || 0) + item.kuantitas;
             });
 
-            // 2. Kurangi dengan total barang keluar
             (dataKeluar || []).forEach(item => {
                 const id = item.id_barang.toUpperCase();
                 stokAkhir[id] = (stokAkhir[id] || 0) - item.kuantitas;
             });
 
-            // 3. Siapkan data untuk Chart.js
             const sortedLabels = Object.keys(stokAkhir).sort();
             
-            // (BARU) Gunakan nama barang + ID untuk label chart
             const labels = sortedLabels.map(id => {
                 const master = masterBarangList.find(m => m.id_barang === id);
                 return master ? `${id} (${master.nama_barang})` : id;
@@ -594,6 +764,9 @@
                 currentChart.destroy();
             }
 
+            // (BARU) Mengatur warna font chart agar sesuai
+            const chartFontColor = '#374151'; // text-gray-700
+            
             currentChart = new Chart(chartCanvas, {
                 type: 'bar',
                 data: {
@@ -601,15 +774,30 @@
                     datasets: [{
                         label: 'Stok Barang Saat Ini',
                         data: data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.7)', // Warna primer (blue-600)
+                        borderColor: 'rgba(37, 99, 235, 1)',
                         borderWidth: 1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } }
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { color: chartFontColor },
+                            grid: { color: '#E5E7EB' }
+                        },
+                        x: {
+                            ticks: { color: chartFontColor },
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: chartFontColor }
+                        }
+                    }
                 }
             });
         }
@@ -617,41 +805,34 @@
 
         // === Event Listener ===
 
-        // Pengatur utama status login
         db.auth.onAuthStateChange((event, session) => {
             if (session) {
-                // User sudah login
                 const user = session.user;
                 console.log("User logged in:", user.email);
                 authContainer.classList.add('hidden');
                 dashboardContainer.classList.remove('hidden');
                 userEmailDisplay.textContent = user.email;
                 
-                // (BARU) Ambil data master dulu, baru data transaksi
                 loadMasterBarang();
                 fetchTransactionData();
                 setupDataListeners();
 
             } else {
-                // User belum login (atau sudah logout)
                 console.log("User logged out");
                 authContainer.classList.remove('hidden');
                 dashboardContainer.classList.add('hidden');
                 userEmailDisplay.textContent = '';
                 
-                // Hentikan mendengarkan data
                 cleanupListeners();
                 
-                // Bersihkan tabel & chart
                 if (currentChart) currentChart.destroy();
                 tableBarangMasuk.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Silakan login</td></tr>';
                 tableBarangKeluar.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Silakan login</td></tr>';
                 tableMasterBarang.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-500">Silakan login</td></tr>';
             }
-            loadingSpinner.classList.add('hidden');
+            loadingSpinner.classList.add('hidden'); // Ini akan menyembunyikan spinner SETELAH status auth didapat
         });
 
-        // Toggle Form Login/Register
         showRegisterLink.addEventListener('click', (e) => {
             e.preventDefault();
             loginForm.classList.add('hidden');
@@ -664,10 +845,8 @@
             loginForm.classList.remove('hidden');
         });
 
-        // (BARU) Handle Search Bar Input
         searchBar.addEventListener('input', filterTables);
 
-        // Handle Register
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('register-email').value;
@@ -677,7 +856,6 @@
             try {
                 const { error } = await db.auth.signUp({ email, password });
                 if (error) throw error;
-                // Supabase otomatis mengirim email konfirmasi. 
                 showMessage("Akun berhasil dibuat! Silakan cek email Anda untuk konfirmasi.", false);
             } catch (error) {
                 console.error("Register error:", error);
@@ -687,7 +865,6 @@
             }
         });
 
-        // Handle Login
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
@@ -697,7 +874,6 @@
             try {
                 const { error } = await db.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                // onAuthStateChange akan otomatis menangani sisanya
                 showMessage("Login berhasil!", false);
             } catch (error) {
                 console.error("Login error:", error);
@@ -707,13 +883,11 @@
             }
         });
 
-        // Handle Logout
         logoutButton.addEventListener('click', async () => {
             loadingSpinner.classList.remove('hidden');
             try {
                 const { error } = await db.auth.signOut();
                 if (error) throw error;
-                // onAuthStateChange akan otomatis menangani sisanya
                 showMessage("Anda telah logout.", false);
             } catch (error) {
                 console.error("Logout error:", error);
@@ -723,7 +897,6 @@
             }
         });
 
-        // (BARU) Handle Form Master Barang
         formMasterBarang.addEventListener('submit', async (e) => {
             e.preventDefault();
             const idBarang = document.getElementById('master-id').value.toUpperCase();
@@ -743,10 +916,9 @@
                 
                 showMessage(`Barang ${namaBarang} berhasil ditambah!`, false);
                 formMasterBarang.reset();
-                // Fitur Realtime akan otomatis mengambil data baru
             } catch (error) {
                 console.error("Error add master barang:", error);
-                if (error.code === '23505') { // Kode error untuk unique violation
+                if (error.code === '23505') {
                     showMessage(`Gagal: ID Barang "${idBarang}" sudah ada. Gunakan ID lain.`, true);
                 } else {
                     showMessage(`Gagal simpan master: ${error.message}`, true);
@@ -754,7 +926,6 @@
             }
         });
 
-        // (BARU) Handle Delete Master Barang
         async function handleDeleteMasterBarang(e) {
             const idBarang = e.currentTarget.dataset.id;
             if (!idBarang) return;
@@ -767,10 +938,9 @@
                 const { error } = await db.from('master_barang').delete().eq('id_barang', idBarang);
                 if (error) throw error;
                 showMessage(`Barang ${idBarang} berhasil dihapus.`, false);
-                // Realtime akan mengurus update UI
             } catch (error) {
                 console.error("Error deleting master barang:", error);
-                if (error.code === '23503') { // Kode error untuk foreign key violation
+                if (error.code === '23503') {
                     showMessage(`Gagal hapus: Barang ${idBarang} sudah tercatat di riwayat Masuk/Keluar.`, true);
                 } else {
                     showMessage(`Gagal hapus: ${error.message}`, true);
@@ -778,10 +948,9 @@
             }
         }
 
-        // (DIPERBARUI) Handle Form Barang Masuk (dari dropdown)
         formBarangMasuk.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const idBarang = selectMasukId.value; // Ambil dari select
+            const idBarang = selectMasukId.value;
             const kuantitas = parseInt(document.getElementById('masuk-kuantitas').value);
             
             if (!idBarang) {
@@ -797,26 +966,24 @@
 
             try {
                 const { error } = await db.from('barang_masuk').insert({ 
-                    id_barang: idBarang, // id_barang dari dropdown
+                    id_barang: idBarang, 
                     kuantitas: kuantitas,
-                    user_id: user.id // Simpan siapa yg input
+                    user_id: user.id
                 });
                 if (error) throw error;
                 
                 showMessage("Data barang masuk berhasil ditambah!", false);
                 formBarangMasuk.reset();
-                selectMasukId.value = ""; // Reset dropdown
-                // Fitur Realtime akan otomatis mengambil data baru
+                selectMasukId.value = "";
             } catch (error) {
                 console.error("Error add barang masuk:", error);
                 showMessage(`Gagal simpan data: ${error.message}`, true);
             }
         });
 
-        // (DIPERBARUI) Handle Form Barang Keluar (dari dropdown)
         formBarangKeluar.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const idBarang = selectKeluarId.value; // Ambil dari select
+            const idBarang = selectKeluarId.value;
             const kuantitas = parseInt(document.getElementById('keluar-kuantitas').value);
             
             if (!idBarang) {
@@ -831,14 +998,12 @@
             }
 
             try {
-                // Validasi stok sebelum mengurangi
-                // Ambil total masuk untuk barang ini
+                // Validasi stok
                 const { data: dataMasuk, error: errMasuk } = await db.from('barang_masuk')
                     .select('kuantitas')
                     .eq('id_barang', idBarang);
                 if (errMasuk) throw errMasuk;
 
-                // Ambil total keluar untuk barang ini
                 const { data: dataKeluar, error: errKeluar } = await db.from('barang_keluar')
                     .select('kuantitas')
                     .eq('id_barang', idBarang);
@@ -852,13 +1017,11 @@
 
                 const stokSaatIni = totalMasuk - totalKeluar;
                 
-                // Cek apakah stok mencukupi
                 if (kuantitas > stokSaatIni) {
                     showMessage(`Gagal: Stok ${idBarang} tidak cukup. Stok saat ini: ${stokSaatIni}`, true);
-                    return; // Hentikan proses jika stok tidak cukup
+                    return;
                 }
 
-                // Jika stok cukup, lanjutkan proses insert
                 const { error } = await db.from('barang_keluar').insert({ 
                     id_barang: idBarang, 
                     kuantitas: kuantitas,
@@ -868,8 +1031,7 @@
                 
                 showMessage("Data barang keluar berhasil ditambah!", false);
                 formBarangKeluar.reset();
-                selectKeluarId.value = ""; // Reset dropdown
-                // Fitur Realtime akan otomatis mengambil data baru
+                selectKeluarId.value = "";
             } catch (error) {
                 console.error("Error add barang keluar:", error);
                 showMessage(`Gagal simpan data: ${error.message}`, true);
