@@ -3,29 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Stok (Supabase) - V6 (Manual Dark Mode)</title>
+    <title>Sistem Stok (Supabase) - V9 (Input Waktu)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/heroicons/1.0.6/css/solid.min.css">
     
     <style>
         /* Menggunakan font Inter sebagai default */
         html { 
-            /* Transisi mulus untuk perubahan tema */
             transition: background-color 0.3s, color 0.3s; 
         }
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #F3F4F6; /* bg-gray-100 */
+            position: relative; 
+            min-height: 100vh;
         }
         
+        /* CSS untuk Background Login Blur */
+        #login-bg {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1; 
+            background-image: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); 
+            background-size: cover; background-position: center;
+            filter: blur(8px); transform: scale(1.1); display: none; 
+        }
+        #login-bg-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1; background-color: rgba(0, 0, 0, 0.4); display: none;
+        }
+
         /* Loading Spinner */
         .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #2563EB; /* Warna primer */
+            border: 5px solid #f3f3f3; border-top: 5px solid #2563EB; 
             border-radius: 50%; width: 50px; height: 50px;
             animation: spin 1s linear infinite;
         }
@@ -34,59 +50,35 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 1. Komponen Card */
+        /* Komponen Dasar */
         .card {
-            background-color: #ffffff;
-            border-radius: 0.5rem; /* 8px */
+            background-color: #ffffff; border-radius: 0.5rem; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 1px solid #E5E7EB; /* border-gray-200 */
-            transition: background-color 0.3s, border-color 0.3s;
+            border: 1px solid #E5E7EB; transition: background-color 0.3s, border-color 0.3s;
             overflow: hidden;
         }
-        .card-body { padding: 1.5rem; /* p-6 */ }
+        .card-body { padding: 1.5rem; }
         .card-title {
-            font-size: 1.25rem; /* text-xl */
-            font-weight: 600; /* font-semibold */
-            color: #1F2937; /* text-gray-800 */
-            margin-bottom: 1rem;
-            transition: color 0.3s;
+            font-size: 1.25rem; font-weight: 600; color: #1F2937; 
+            margin-bottom: 1rem; transition: color 0.3s;
         }
-
-        /* 2. Komponen Form */
         .form-label {
-            display: block; margin-bottom: 0.5rem; /* mb-2 */
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500; /* font-medium */
-            color: #4B5563; /* text-gray-600 */
-            transition: color 0.3s;
+            display: block; margin-bottom: 0.5rem; font-size: 0.875rem; 
+            font-weight: 500; color: #4B5563; transition: color 0.3s;
         }
-        .form-input,
-        .form-select {
-            display: block; width: 100%;
-            border: 1px solid #D1D5DB; /* border-gray-300 */
-            border-radius: 0.375rem; /* 6px */
-            padding: 0.75rem 1rem;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+        .form-input, .form-select {
+            display: block; width: 100%; border: 1px solid #D1D5DB; 
+            border-radius: 0.375rem; padding: 0.75rem 1rem; 
+            transition: all 0.2s ease-in-out; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); 
             background-color: #FFFFFF;
         }
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: #2563EB; /* Warna primer */
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); /* Efek ring */
+        .form-input:focus, .form-select:focus {
+            outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); 
         }
-
-        /* 3. Komponen Tombol (Button) */
         .btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            gap: 0.5rem; width: 100%;
-            padding: 0.75rem 1.5rem;
-            border: 1px solid transparent;
-            border-radius: 0.375rem; /* 6px */
-            font-weight: 600; cursor: pointer;
-            text-align: center;
-            transition: all 0.2s ease-in-out;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;
+            padding: 0.75rem 1.5rem; border: 1px solid transparent; border-radius: 0.375rem; 
+            font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s ease-in-out;
         }
         .btn-primary { background-color: #2563EB; color: white; }
         .btn-primary:hover { background-color: #1D4ED8; }
@@ -94,331 +86,163 @@
         .btn-success:hover { background-color: #15803D; }
         .btn-error { background-color: #DC2626; color: white; }
         .btn-error:hover { background-color: #B91C1C; }
-        .btn-secondary {
-            background-color: #ffffff; color: #374151;
-            border-color: #D1D5DB;
-        }
+        .btn-secondary { background-color: #ffffff; color: #374151; border-color: #D1D5DB; }
         .btn-secondary:hover { background-color: #F9FAFB; }
 
-        /* 4. Komponen Alert (Notifikasi) */
+        /* Alert */
         #message-box-container {
-            position: fixed; top: 1.25rem; right: 1.25rem; /* top-5 right-5 */
-            z-index: 50; max-width: 24rem; /* max-w-sm */
+            position: fixed; top: 1.25rem; right: 1.25rem; z-index: 50; max-width: 24rem; 
             display: flex; flex-direction: column; gap: 1rem;
         }
         .alert {
-            padding: 1rem; border-radius: 0.5rem; /* rounded-lg */
+            padding: 1rem; border-radius: 0.5rem; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            display: flex; align-items: center;
-            transition: background-color 0.3s, color 0.3s;
+            display: flex; align-items: center; transition: background-color 0.3s, color 0.3s;
         }
-        .alert-icon {
-            flex-shrink: 0; width: 1.5rem; height: 1.5rem; /* w-6 h-6 */
-            margin-right: 0.75rem; /* mr-3 */
-        }
+        .alert-icon { flex-shrink: 0; width: 1.5rem; height: 1.5rem; margin-right: 0.75rem; }
         .alert-success { background-color: #D1FAE5; color: #065F46; }
         .alert-error { background-color: #FEE2E2; color: #991B1B; }
 
-        /* 5. Komponen Tabel Kustom */
+        /* Table */
         .custom-table { width: 100%; min-width: 640px; border-collapse: collapse; }
         .custom-table thead { background-color: #F9FAFB; transition: background-color 0.3s; }
         .custom-table th {
-            padding: 0.75rem 1.5rem; text-align: left;
-            font-size: 0.75rem; font-weight: 600;
-            color: #6B7280; text-transform: uppercase;
-            transition: color 0.3s;
+            padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 600;
+            color: #6B7280; text-transform: uppercase; transition: color 0.3s;
         }
-        .custom-table tbody tr { 
-            border-bottom: 1px solid #E5E7EB; 
-            transition: border-color 0.3s, background-color 0.3s;
-        }
+        .custom-table tbody tr { border-bottom: 1px solid #E5E7EB; transition: border-color 0.3s, background-color 0.3s; }
         .custom-table tbody tr:nth-child(even) { background-color: #F9FAFB; }
-        .custom-table td {
-            padding: 1rem 1.5rem; font-size: 0.875rem; color: #374151;
-            transition: color 0.3s;
-        }
+        .custom-table td { padding: 1rem 1.5rem; font-size: 0.875rem; color: #374151; transition: color 0.3s; }
         .badge {
-            display: inline-block; padding: 0.25em 0.75em;
-            font-size: 0.875rem; font-weight: 600;
-            border-radius: 9999px; /* rounded-full */
-            transition: background-color 0.3s, color 0.3s;
+            display: inline-block; padding: 0.25em 0.75em; font-size: 0.875rem; font-weight: 600;
+            border-radius: 9999px; transition: background-color 0.3s, color 0.3s;
         }
         .badge-success { background-color: #D1FAE5; color: #065F46; }
         .badge-error { background-color: #FEE2E2; color: #991B1B; }
         
-        /* 6. Komponen Info Card */
+        /* Info Card & Theme */
         .info-card { display: flex; align-items: center; gap: 1rem; }
         .info-card-icon {
-            flex-shrink: 0; width: 3rem; height: 3rem; /* w-12 h-12 */
-            border-radius: 9999px; display: inline-flex;
-            align-items: center; justify-content: center;
+            flex-shrink: 0; width: 3rem; height: 3rem; border-radius: 9999px; 
+            display: inline-flex; align-items: center; justify-content: center;
         }
         .info-card-icon svg { width: 1.5rem; height: 1.5rem; color: white; }
-        .info-card-content h3 {
-            font-size: 0.875rem; font-weight: 500; color: #6B7280;
-        }
-        .info-card-content p {
-            font-size: 1.875rem; font-weight: 700; color: #1F2937;
-        }
+        .info-card-content h3 { font-size: 0.875rem; font-weight: 500; color: #6B7280; }
+        .info-card-content p { font-size: 1.875rem; font-weight: 700; color: #1F2937; }
 
-        /* 7. Tombol Tema (BARU) */
-        #theme-toggle-btn {
-            color: #4B5563; /* text-gray-600 */
-            transition: all 0.2s;
-        }
-        #theme-toggle-btn:hover { background-color: #F3F4F6; } /* hover:bg-gray-100 */
-        
-        /* Logika Tampilan Ikon Tema */
+        #theme-toggle-btn { color: #4B5563; transition: all 0.2s; }
+        #theme-toggle-btn:hover { background-color: #F3F4F6; } 
         #theme-icon-moon { display: none; }
         .dark #theme-icon-sun { display: none; }
         .dark #theme-icon-moon { display: block; }
-        
 
-        /* ======================================= */
-        /* 8. Mode Gelap (Dark Mode) - Manual .dark */
-        /* ======================================= */
-
-        /* Latar belakang utama */
-        .dark body {
-            background-color: #111827; /* bg-gray-900 */
-            color: #E5E7EB; /* text-gray-200 */
-        }
-
-        /* Latar belakang container (kartu, header) */
-        .dark .card,
-        .dark header.bg-white { /* Menargetkan header */
-            background-color: #1F2937; /* bg-gray-800 */
-            border-color: #374151; /* border-gray-700 */
-        }
-
-        /* Teks Judul dan Link */
-        .dark .card-title,
-        .dark .text-gray-700, /* Judul form login */
-        .dark .text-gray-800 {
-            color: #FFFFFF; /* text-white */
-        }
-        
-        /* Judul Header (biru) */
-        .dark h1.text-blue-800 {
-            color: #93C5FD; /* text-blue-300 */
-        }
-        
-        /* Judul Kartu (hijau & merah) */
-        .dark h2.text-green-700 { color: #4ADE80; /* text-green-400 */ }
-        .dark h2.text-red-700 { color: #F87171; /* text-red-400 */ }
-
-        /* Teks sekunder (label, email, dll) */
-        .dark .form-label,
-        .dark #user-email,
-        .dark p.text-gray-500,
-        .dark .text-sm.text-gray-500 {
-            color: #9CA3AF; /* text-gray-400 */
-        }
-
-        /* Form Input & Select */
-        .dark .form-input,
-        .dark .form-select {
-            background-color: #374151; /* bg-gray-700 */
-            border-color: #4B5563; /* border-gray-600 */
-            color: #FFFFFF;
-            color-scheme: dark; /*Dropdown jadi gelap*/
+        /* Dark Mode */
+        .dark body { background-color: #111827; color: #E5E7EB; }
+        .dark .card, .dark header.bg-white { background-color: #1F2937; border-color: #374151; }
+        .dark .card-title, .dark .text-gray-700, .dark .text-gray-800 { color: #FFFFFF; }
+        .dark h1.text-blue-800 { color: #93C5FD; }
+        .dark h2.text-green-700 { color: #4ADE80; }
+        .dark h2.text-red-700 { color: #F87171; }
+        .dark .form-label, .dark #user-email, .dark p.text-gray-500, .dark .text-sm.text-gray-500 { color: #9CA3AF; }
+        .dark #realtime-clock { color: #D1D5DB; }
+        .dark .form-input, .dark .form-select {
+            background-color: #374151; border-color: #4B5563; color: #FFFFFF; color-scheme: dark;
         }
         .dark .form-input::placeholder { color: #9CA3AF; }
-        .dark .form-input:focus,
-        .dark .form-select:focus {
-            background-color: #374151;
-            border-color: #2563EB;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+        .dark .form-input:focus, .dark .form-select:focus {
+            background-color: #374151; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
         }
-
-        /* Tombol Sekunder & Tombol Tema */
-        .dark .btn-secondary {
-            background-color: #374151; color: #E5E7EB;
-            border-color: #4B5563;
-        }
+        .dark .btn-secondary { background-color: #374151; color: #E5E7EB; border-color: #4B5563; }
         .dark .btn-secondary:hover { background-color: #4B5563; }
-        .dark #theme-toggle-btn {
-            color: #D1D5DB; /* text-gray-300 */
-        }
-        .dark #theme-toggle-btn:hover { background-color: #374151; } /* hover:bg-gray-700 */
-
-
-        /* Tabel Kustom */
+        .dark #theme-toggle-btn { color: #D1D5DB; }
+        .dark #theme-toggle-btn:hover { background-color: #374151; }
         .dark .custom-table thead { background-color: #1F2937; }
         .dark .custom-table th { color: #9CA3AF; }
         .dark .custom-table tbody tr { border-bottom-color: #374151; }
         .dark .custom-table tbody tr:nth-child(even) { background-color: #374151; }
         .dark .custom-table td { color: #E5E7EB; }
-        .dark .custom-table td[colspan="3"].text-gray-500,
-        .dark .custom-table td[colspan="5"].text-gray-500 {
-            color: #9CA3AF; /* text-gray-400 */
-        }
-
-        /* Badge & Alert (Inversi warna) */
-        .dark .badge-success,
-        .dark .alert.alert-success {
-            background-color: #166534; color: #D1FAE5;
-        }
-        .dark .badge-error,
-        .dark .alert.alert-error {
-            background-color: #991B1B; color: #FEE2E2;
-        }
-
-        /* Info Card */
+        .dark .custom-table td[colspan="3"].text-gray-500, .dark .custom-table td[colspan="5"].text-gray-500 { color: #9CA3AF; }
+        .dark .badge-success, .dark .alert.alert-success { background-color: #166534; color: #D1FAE5; }
+        .dark .badge-error, .dark .alert.alert-error { background-color: #991B1B; color: #FEE2E2; }
         .dark .info-card-content h3 { color: #9CA3AF; }
         .dark .info-card-content p { color: #FFFFFF; }
-
-        /* Logo (Placeholder) */
-        .dark img[src^="https://placehold.co"] {
-            filter: invert(0.9) hue-rotate(180deg);
-        }
+        .dark img[src^="https://placehold.co"] { filter: invert(0.9) hue-rotate(180deg); }
     </style>
 
     <script>
         (function() {
             try {
                 const theme = localStorage.getItem('theme');
-                if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                } else if (theme === 'light') {
-                    document.documentElement.classList.remove('dark');
-                } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    // Jika localStorage kosong, fallback ke preferensi sistem
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('theme', 'dark'); // Simpan fallback
-                } else {
-                    localStorage.setItem('theme', 'light'); // Simpan fallback
-                }
-            } catch (e) {
-                console.error("Gagal mengakses localStorage untuk tema.", e);
-            }
+                if (theme === 'dark') { document.documentElement.classList.add('dark'); }
+                else if (theme === 'light') { document.documentElement.classList.remove('dark'); }
+                else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark');
+                } else { localStorage.setItem('theme', 'light'); }
+            } catch (e) { console.error("Gagal mengakses localStorage.", e); }
         })();
     </script>
 </head>
 <body class="text-gray-800">
 
-    <div class="container mx-auto p-4 md:p-8">
+    <div id="login-bg"></div>
+    <div id="login-bg-overlay"></div>
+
+    <div class="container mx-auto p-4 md:p-8 relative z-10">
 
         <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-75">
             <div class="loader"></div>
         </div>
-
-        <div id="message-box-container">
-            </div>
+        <div id="message-box-container"></div>
 
         <div id="auth-container" class="hidden max-w-md mx-auto mt-10">
             <div class="card">
                 <div class="card-body">
-                    <img src="https://placehold.co/300x80/003366/FFFFFF?text=Perusahaan+Redesma" alt="Logo Perusahaan Redesma" class="mx-auto mb-6 rounded">
-                    
+                    <img src="https://placehold.co/300x80/003366/FFFFFF?text=Perusahaan+Redesma" alt="Logo" class="mx-auto mb-6 rounded">
                     <form id="login-form">
                         <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Login Sistem Stok</h2>
-                        <div class="mb-4">
-                            <label for="login-email" class="form-label">Email</label>
-                            <input type="email" id="login-email" required class="form-input">
-                        </div>
-                        <div class="mb-6">
-                            <label for="login-password" class="form-label">Password</label>
-                            <input type="password" id="login-password" required class="form-input">
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 8a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
-                            Masuk
-                        </button>
-                        <p class="text-center text-sm text-gray-500 mt-4">
-                            Belum punya akun? 
-                            <a href="#" id="show-register" class="text-blue-600 hover:underline font-medium">Daftar di sini</a>
-                        </p>
+                        <div class="mb-4"><label for="login-email" class="form-label">Email</label><input type="email" id="login-email" required class="form-input"></div>
+                        <div class="mb-6"><label for="login-password" class="form-label">Password</label><input type="password" id="login-password" required class="form-input"></div>
+                        <button type="submit" class="btn btn-primary">Masuk</button>
+                        <p class="text-center text-sm text-gray-500 mt-4">Belum punya akun? <a href="#" id="show-register" class="text-blue-600 hover:underline font-medium">Daftar di sini</a></p>
                     </form>
-
                     <form id="register-form" class="hidden">
                         <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Daftar Akun Baru</h2>
-                        <div class="mb-4">
-                            <label for="register-email" class="form-label">Email</label>
-                            <input type="email" id="register-email" required class="form-input">
-                        </div>
-                        <div class="mb-6">
-                            <label for="register-password" class="form-label">Password</label>
-                            <input type="password" id="register-password" required class="form-input">
-                        </div>
-                        <button type="submit" class="btn btn-success">
-                            Daftar
-                        </button>
-                        <p class="text-center text-sm text-gray-500 mt-4">
-                            Sudah punya akun? 
-                            <a href="#" id="show-login" class="text-blue-600 hover:underline font-medium">Login di sini</a>
-                        </p>
+                        <div class="mb-4"><label for="register-email" class="form-label">Email</label><input type="email" id="register-email" required class="form-input"></div>
+                        <div class="mb-6"><label for="register-password" class="form-label">Password</label><input type="password" id="register-password" required class="form-input"></div>
+                        <button type="submit" class="btn btn-success">Daftar</button>
+                        <p class="text-center text-sm text-gray-500 mt-4">Sudah punya akun? <a href="#" id="show-login" class="text-blue-600 hover:underline font-medium">Login di sini</a></p>
                     </form>
                 </div>
             </div>
         </div>
 
         <div id="dashboard-container" class="hidden">
-            
             <header class="flex flex-wrap justify-between items-center gap-4 mb-6 p-4 bg-white rounded-lg shadow">
                 <h1 class="text-3xl font-bold text-blue-800">Dashboard Stok Redesma</h1>
-                
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                    <div id="realtime-clock" class="text-sm font-mono font-semibold text-gray-600 mr-4 hidden md:block border-r pr-4 border-gray-300"></div>
                     <span id="user-email" class="text-gray-600 mr-2 hidden md:block"></span>
-                    
+                    <button id="download-excel-btn" class="p-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200" title="Download Excel">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    </button>
                     <button id="theme-toggle-btn" class="p-2 rounded-full" title="Toggle Tema">
-                        <svg id="theme-icon-sun" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <svg id="theme-icon-moon" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
+                        <svg id="theme-icon-sun" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        <svg id="theme-icon-moon" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                     </button>
-
-                    <button id="logout-button" class="btn btn-error py-2 px-4 w-auto"> 
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-2.293 2.293a1 1 0 101.414 1.414L10 11.414l2.293 2.293a1 1 0 001.414-1.414L11.414 10l2.293-2.293a1 1 0 00-1.414-1.414L10 8.586 7.707 7.293z" clip-rule="evenodd" /></svg>
-                        Logout
-                    </button>
+                    <button id="logout-button" class="btn btn-error py-2 px-4 w-auto">Logout</button>
                 </div>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="card">
-                    <div class="card-body info-card">
-                        <div class="info-card-icon bg-blue-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 11a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                        </div>
-                        <div class="info-card-content">
-                            <h3>Total Jenis Barang</h3>
-                            <p id="info-jenis-barang">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body info-card">
-                        <div class="info-card-icon bg-green-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd" /></svg>
-                        </div>
-                        <div class="info-card-content">
-                            <h3>Total Kuantitas Stok</h3>
-                            <p id="info-total-stok">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body info-card">
-                        <div class="info-card-icon bg-red-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.332-.21 3.03-1.742 3.03H4.42c-1.53 0-2.492-1.7-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
-                        </div>
-                        <div class="info-card-content">
-                            <h3>Barang Stok Habis</h3>
-                            <p id="info-stok-habis">0</p>
-                        </div>
-                    </div>
-                </div>
+                <div class="card"><div class="card-body info-card"><div class="info-card-icon bg-blue-500"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 11a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg></div><div class="info-card-content"><h3>Total Jenis Barang</h3><p id="info-jenis-barang">0</p></div></div></div>
+                <div class="card"><div class="card-body info-card"><div class="info-card-icon bg-green-500"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clip-rule="evenodd" /></svg></div><div class="info-card-content"><h3>Total Kuantitas Stok</h3><p id="info-total-stok">0</p></div></div></div>
+                <div class="card"><div class="card-body info-card"><div class="info-card-icon bg-red-500"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.332-.21 3.03-1.742 3.03H4.42c-1.53 0-2.492-1.7-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" /></svg></div><div class="info-card-content"><h3>Barang Stok Habis</h3><p id="info-stok-habis">0</p></div></div></div>
             </div>
 
             <div class="card mb-6">
                 <div class="card-body">
                     <h2 class="card-title">Grafik Stok Barang (Saat Ini)</h2>
-                    <div class="h-64 md:h-80">
-                        <canvas id="inventoryChart"></canvas>
-                    </div>
+                    <div class="h-64 md:h-80"><canvas id="inventoryChart"></canvas></div>
                 </div>
             </div>
 
@@ -427,17 +251,9 @@
                     <div class="card-body">
                         <h2 class="card-title">Manajemen Master Barang</h2>
                         <form id="form-master-barang" class="space-y-4">
-                            <div>
-                                <label for="master-id" class="form-label">ID Barang (Unik)</label>
-                                <input type="text" id="master-id" placeholder="Contoh: B001, A002" required class="form-input">
-                            </div>
-                            <div>
-                                <label for="master-nama" class="form-label">Nama Barang</label>
-                                <input type="text" id="master-nama" placeholder="Contoh: Baut 10mm" required class="form-input">
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                Tambah Master Barang
-                            </button>
+                            <div><label for="master-id" class="form-label">ID Barang (Unik)</label><input type="text" id="master-id" placeholder="Contoh: B001, A002" required class="form-input"></div>
+                            <div><label for="master-nama" class="form-label">Nama Barang</label><input type="text" id="master-nama" placeholder="Contoh: Baut 10mm" required class="form-input"></div>
+                            <button type="submit" class="btn btn-primary">Tambah Master Barang</button>
                         </form>
                     </div>
                 </div>
@@ -446,16 +262,8 @@
                         <h2 class="card-title">List Master Barang</h2>
                         <div class="max-h-64 overflow-y-auto">
                             <table class="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID Barang</th>
-                                        <th>Nama Barang</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-master-barang">
-                                    <tr><td colspan="3" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
-                                </tbody>
+                                <thead><tr><th>ID Barang</th><th>Nama Barang</th><th>Aksi</th></tr></thead>
+                                <tbody id="table-master-barang"><tr><td colspan="3" class="p-4 text-center text-gray-500">Memuat data...</td></tr></tbody>
                             </table>
                         </div>
                     </div>
@@ -467,23 +275,13 @@
                     <div class="card-body">
                         <h2 class="card-title text-green-700">Input Barang Masuk</h2>
                         <form id="form-barang-masuk" class="space-y-4">
-                            <div>
-                                <label for="masuk-id" class="form-label">Pilih Barang</label>
-                                <select id="masuk-id" required class="form-select">
-                                    <option value="">Memuat barang...</option>
-                                </select>
+                            <div><label for="masuk-id" class="form-label">Pilih Barang</label><select id="masuk-id" required class="form-select"><option value="">Memuat barang...</option></select></div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label for="masuk-tanggal" class="form-label">Tanggal</label><input type="date" id="masuk-tanggal" required class="form-input"></div>
+                                <div><label for="masuk-waktu" class="form-label">Jam</label><input type="time" id="masuk-waktu" required class="form-input"></div>
                             </div>
-                            <div>
-                                <label for="masuk-tanggal" class="form-label">Tanggal Masuk</label>
-                                <input type="date" id="masuk-tanggal" required class="form-input">
-                            </div>
-                            <div>
-                                <label for="masuk-kuantitas" class="form-label">Kuantitas</label>
-                                <input type="number" id="masuk-kuantitas" min="1" required class="form-input">
-                            </div>
-                            <button type="submit" class="btn btn-success">
-                                Tambah Masuk
-                            </button>
+                            <div><label for="masuk-kuantitas" class="form-label">Kuantitas</label><input type="number" id="masuk-kuantitas" min="1" required class="form-input"></div>
+                            <button type="submit" class="btn btn-success">Tambah Masuk</button>
                         </form>
                     </div>
                 </div>
@@ -492,23 +290,13 @@
                     <div class="card-body">
                         <h2 class="card-title text-red-700">Input Barang Keluar</h2>
                         <form id="form-barang-keluar" class="space-y-4">
-                            <div>
-                                <label for="keluar-id" class="form-label">Pilih Barang</label>
-                                <select id="keluar-id" required class="form-select">
-                                    <option value="">Memuat barang...</option>
-                                </select>
+                            <div><label for="keluar-id" class="form-label">Pilih Barang</label><select id="keluar-id" required class="form-select"><option value="">Memuat barang...</option></select></div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label for="keluar-tanggal" class="form-label">Tanggal</label><input type="date" id="keluar-tanggal" required class="form-input"></div>
+                                <div><label for="keluar-waktu" class="form-label">Jam</label><input type="time" id="keluar-waktu" required class="form-input"></div>
                             </div>
-                            <div>
-                                <label for="keluar-tanggal" class="form-label">Tanggal Keluar</label>
-                                <input type="date" id="keluar-tanggal" required class="form-input">
-                            </div>
-                            <div>
-                                <label for="keluar-kuantitas" class="form-label">Kuantitas</label>
-                                <input type="number" id="keluar-kuantitas" min="1" required class="form-input">
-                            </div>
-                            <button type="submit" class="btn btn-error">
-                                Tambah Keluar
-                            </button>
+                            <div><label for="keluar-kuantitas" class="form-label">Kuantitas</label><input type="number" id="keluar-kuantitas" min="1" required class="form-input"></div>
+                            <button type="submit" class="btn btn-error">Tambah Keluar</button>
                         </form>
                     </div>
                 </div>
@@ -517,32 +305,12 @@
             <div class="card mb-6">
                 <div class="card-body">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div class="md:col-span-2">
-                            <label for="search-bar" class="form-label">
-                                🔍 Cari Cepat (ID/Nama)
-                            </label>
-                            <input type="text" id="search-bar" placeholder="Ketik ID (B001) atau Nama (Baut)..." class="form-input">
-                        </div>
-                        <div class="md:col-span-1">
-                            <label for="filter-tanggal-mulai" class="form-label">
-                                📅 Tanggal Mulai
-                            </label>
-                            <input type="date" id="filter-tanggal-mulai" class="form-input">
-                        </div>
-                        <div class="md:col-span-1">
-                            <label for="filter-tanggal-akhir" class="form-label">
-                                📅 Tanggal Akhir
-                            </label>
-                            <input type="date" id="filter-tanggal-akhir" class="form-input">
-                        </div>
+                        <div class="md:col-span-2"><label for="search-bar" class="form-label">🔍 Cari Cepat (ID/Nama)</label><input type="text" id="search-bar" placeholder="Ketik ID (B001) atau Nama (Baut)..." class="form-input"></div>
+                        <div class="md:col-span-1"><label for="filter-tanggal-mulai" class="form-label">📅 Tanggal Mulai</label><input type="date" id="filter-tanggal-mulai" class="form-input"></div>
+                        <div class="md:col-span-1"><label for="filter-tanggal-akhir" class="form-label">📅 Tanggal Akhir</label><input type="date" id="filter-tanggal-akhir" class="form-input"></div>
                         <div class="md:col-span-1 flex items-end gap-2">
-                            <button id="filter-btn" class="btn btn-primary w-full" title="Filter">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L13 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 019 17v-5.586L4.293 6.707A1 1 0 014 6V3z" clip-rule="evenodd" /></svg>
-                                Filter
-                            </button>
-                            <button id="reset-filter-btn" class="btn btn-secondary w-auto" title="Reset Filter">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.89 0.633A5.002 5.002 0 005.002 7.5V5a1 1 0 01-1-1 1 1 0 01-1-1zM2.002 8.5a1 1 0 011.89 0.633A5.002 5.002 0 0014.998 12.5V15a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.603-1.333z" clip-rule="evenodd" /></svg>
-                            </button>
+                            <button id="filter-btn" class="btn btn-primary w-full" title="Filter"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L13 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 019 17v-5.586L4.293 6.707A1 1 0 014 6V3z" clip-rule="evenodd" /></svg>Filter</button>
+                            <button id="reset-filter-btn" class="btn btn-secondary w-auto" title="Reset Filter"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.89 0.633A5.002 5.002 0 005.002 7.5V5a1 1 0 01-1-1 1 1 0 01-1-1zM2.002 8.5a1 1 0 011.89 0.633A5.002 5.002 0 0014.998 12.5V15a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.603-1.333z" clip-rule="evenodd" /></svg></button>
                         </div>
                     </div>
                 </div>
@@ -552,118 +320,68 @@
                 <div class="card">
                     <div class="card-body">
                         <h2 class="card-title text-green-700">Data Barang Masuk</h2>
-                        <div class="overflow-x-auto max-h-96"> <table class="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>ID Barang</th>
-                                        <th>Nama Barang</th>
-                                        <th>Kuantitas</th>
-                                        <th>Tanggal Masuk</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-barang-masuk">
-                                    <tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="overflow-x-auto max-h-96"> <table class="custom-table"><thead><tr><th>No</th><th>ID Barang</th><th>Nama Barang</th><th>Kuantitas</th><th>Waktu Masuk</th></tr></thead><tbody id="table-barang-masuk"><tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr></tbody></table></div>
                     </div>
                 </div>
-
                 <div class="card">
                     <div class="card-body">
                         <h2 class="card-title text-red-700">Data Barang Keluar</h2>
-                        <div class="overflow-x-auto max-h-96"> <table class="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>ID Barang</th>
-                                        <th>Nama Barang</th>
-                                        <th>Kuantitas</th>
-                                        <th>Tanggal Keluar</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-barang-keluar">
-                                    <tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="overflow-x-auto max-h-96"> <table class="custom-table"><thead><tr><th>No</th><th>ID Barang</th><th>Nama Barang</th><th>Kuantitas</th><th>Waktu Keluar</th></tr></thead><tbody id="table-barang-keluar"><tr><td colspan="5" class="p-4 text-center text-gray-500">Memuat data...</td></tr></tbody></table></div>
                     </div>
                 </div>
             </div>
-
         </div> 
-    </div> <script type="module">
-        // 4. Supabase Import
+    </div> 
+
+    <script type="module">
         const { createClient } = supabase;
-
         // ===================================================================
-        // Konfigurasi Supabase (dari V4 Anda)
+        const supabaseUrl = "https://kcwxjwtvjsdgobeygiau.supabase.co"; 
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjd3hqd3R2anNkZ29iZXlnaWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzMjMxNzMsImV4cCI6MjA3ODg5OTE3M30.BW7hqJIp1gbUejDNKVaf6A1jhz4bIXIFVCzztoiwuZU";
         // ===================================================================
-        const supabaseUrl = "https://kcwxjwtvjsdgobeygiau.supabase.co"; // <-- SUDAH DISET
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjd3hqd3R2anNkZ29iZXlnaWF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzMjMxNzMsImV4cCI6MjA3ODg5OTE3M30.BW7hqJIp1gbUejDNKVaf6A1jhz4bIXIFVCzztoiwuZU"; // <-- SUDAH DISET
-        // ===================================================================
-
-        // Inisialisasi Supabase
         const db = createClient(supabaseUrl, supabaseKey);
         console.log('Supabase client initialized');
 
-        // Variabel Global
-        let currentChart = null; 
-        let realtimeChannel = null; 
-        let masterBarangList = []; 
-        let allBarangMasuk = []; // (BARU) Cache data untuk filter
-        let allBarangKeluar = []; // (BARU) Cache data untuk filter
+        let currentChart = null; let realtimeChannel = null; let masterBarangList = []; let allBarangMasuk = []; let allBarangKeluar = []; 
 
-        // DOM Elements
         const loadingSpinner = document.getElementById('loading-spinner');
         const authContainer = document.getElementById('auth-container');
         const dashboardContainer = document.getElementById('dashboard-container');
         const messageBoxContainer = document.getElementById('message-box-container'); 
+        const loginBg = document.getElementById('login-bg');
+        const loginBgOverlay = document.getElementById('login-bg-overlay');
         
-        // Auth Forms
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
         const showRegisterLink = document.getElementById('show-register');
         const showLoginLink = document.getElementById('show-login');
-        
-        // Dashboard Elements
         const userEmailDisplay = document.getElementById('user-email');
         const logoutButton = document.getElementById('logout-button');
         const chartCanvas = document.getElementById('inventoryChart').getContext('2d');
         
-        // (BARU) Tema
         const themeToggleBtn = document.getElementById('theme-toggle-btn');
-        
-        // (BARU) Papan Info
+        const downloadExcelBtn = document.getElementById('download-excel-btn'); 
+        const realtimeClock = document.getElementById('realtime-clock');
         const infoJenisBarang = document.getElementById('info-jenis-barang');
         const infoTotalStok = document.getElementById('info-total-stok');
         const infoStokHabis = document.getElementById('info-stok-habis');
         
-        // (BARU) Filter Elements
         const searchBar = document.getElementById('search-bar');
         const filterTanggalMulai = document.getElementById('filter-tanggal-mulai');
         const filterTanggalAkhir = document.getElementById('filter-tanggal-akhir');
         const filterBtn = document.getElementById('filter-btn');
         const resetFilterBtn = document.getElementById('reset-filter-btn');
 
-        // Master Barang
         const formMasterBarang = document.getElementById('form-master-barang');
         const tableMasterBarang = document.getElementById('table-master-barang');
         const selectMasukId = document.getElementById('masuk-id');
         const selectKeluarId = document.getElementById('keluar-id');
-
-        // Data Forms
         const formBarangMasuk = document.getElementById('form-barang-masuk');
         const formBarangKeluar = document.getElementById('form-barang-keluar');
-
-        // Data Tables
         const tableBarangMasuk = document.getElementById('table-barang-masuk');
         const tableBarangKeluar = document.getElementById('table-barang-keluar');
 
-        // === Fungsi Helper ===
-        
-        /** Menampilkan pesan notifikasi kustom (dari V4) */
+        // === Helper ===
         function showMessage(message, isError = false) {
             const alertType = isError ? 'alert-error' : 'alert-success';
             const iconSvg = isError 
@@ -673,102 +391,112 @@
             alertDiv.className = `alert ${alertType}`;
             alertDiv.innerHTML = `${iconSvg} <span class="font-medium">${message}</span>`;
             messageBoxContainer.appendChild(alertDiv);
-            setTimeout(() => {
-                alertDiv.style.transition = 'opacity 0.5s ease-out';
-                alertDiv.style.opacity = '0';
-                setTimeout(() => alertDiv.remove(), 500);
-            }, 3000);
+            setTimeout(() => { alertDiv.style.transition = 'opacity 0.5s ease-out'; alertDiv.style.opacity = '0'; setTimeout(() => alertDiv.remove(), 500); }, 3000);
         }
 
-        /** (DIUBAH) Memformat obyek Tanggal (Handle Timezone) */
+        // (DIUBAH) Format Tanggal + Jam
         function formatTanggal(tanggalString) {
             if (!tanggalString) return 'N/A';
             const date = new Date(tanggalString); 
-            // Penyesuaian agar tanggal tampil benar (mengatasi zona waktu input date)
             const userTimezoneOffset = date.getTimezoneOffset() * 60000;
             const correctedDate = new Date(date.getTime() + userTimezoneOffset);
             
             return correctedDate.toLocaleString('id-ID', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit' // Tambahkan Jam & Menit
             });
         }
         
-        /** (BARU) Mengatur input tanggal ke hari ini */
+        // (DIUBAH) Default Tanggal & Jam
         function setDefaultDates() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('masuk-tanggal').value = today;
-            document.getElementById('keluar-tanggal').value = today;
+            const now = new Date();
+            const dateString = now.toISOString().split('T')[0];
+            const timeString = now.toTimeString().slice(0, 5); // HH:MM
+
+            document.getElementById('masuk-tanggal').value = dateString;
+            document.getElementById('masuk-waktu').value = timeString;
+            
+            document.getElementById('keluar-tanggal').value = dateString;
+            document.getElementById('keluar-waktu').value = timeString;
         }
 
-        /** (DIUBAH) Memfilter tabel riwayat (Search + Tanggal) */
         function filterTables() {
             const searchTerm = searchBar.value.trim().toUpperCase();
             const startDate = filterTanggalMulai.value;
             const endDate = filterTanggalAkhir.value;
-
             const filterTBody = (dataCache) => {
                 return dataCache.filter(item => {
                     const namaBarang = item.master_barang ? item.master_barang.nama_barang.toUpperCase() : '';
                     const idBarang = item.id_barang.toUpperCase();
                     const matchSearch = idBarang.includes(searchTerm) || namaBarang.includes(searchTerm);
-                    
-                    // Pastikan item.tanggal ada sebelum di-split
                     const rowDate = item.tanggal ? item.tanggal.split('T')[0] : '';
                     const matchStart = !startDate || (rowDate && rowDate >= startDate);
                     const matchEnd = !endDate || (rowDate && rowDate <= endDate);
-                    
                     return matchSearch && (matchStart && matchEnd);
                 });
             };
-            
             renderTabelMasuk(filterTBody(allBarangMasuk));
             renderTabelKeluar(filterTBody(allBarangKeluar));
         }
 
-        // === (BARU) Fungsi Tema ===
-        
         function applyTheme(theme) {
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-            try {
-                localStorage.setItem('theme', theme);
-            } catch (e) { console.warn("Gagal menyimpan tema.", e); }
+            if (theme === 'dark') document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+            try { localStorage.setItem('theme', theme); } catch (e) {}
         }
-
         function toggleTheme() {
-            // Periksa tema saat ini dari class di <html>
             const isDark = document.documentElement.classList.contains('dark');
             const newTheme = isDark ? 'light' : 'dark';
             applyTheme(newTheme);
-            // Render ulang chart dengan warna baru
-            if (currentChart) {
-                // Panggil ulang fetchTransactionData untuk render chart
-                fetchTransactionData();
+            if (currentChart) fetchTransactionData();
+        }
+        function updateClock() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            const dateString = now.toLocaleDateString('id-ID', options);
+            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            if (realtimeClock) realtimeClock.textContent = `${dateString} - ${timeString}`;
+        }
+        setInterval(updateClock, 1000);
+
+        // (DIUBAH) Download Excel dengan kolom Waktu
+        function downloadExcel() {
+            if ((!allBarangMasuk || allBarangMasuk.length === 0) && (!allBarangKeluar || allBarangKeluar.length === 0)) {
+                showMessage("Belum ada data untuk diekspor.", true);
+                return;
             }
+            const dataMasukFormatted = allBarangMasuk.map((item, index) => ({
+                "No": index + 1,
+                "ID Barang": item.id_barang,
+                "Nama Barang": item.master_barang ? item.master_barang.nama_barang : '(Data Hilang)',
+                "Kuantitas": item.kuantitas,
+                "Waktu Masuk": formatTanggal(item.tanggal) // Tampilkan jam juga
+            }));
+            const dataKeluarFormatted = allBarangKeluar.map((item, index) => ({
+                "No": index + 1,
+                "ID Barang": item.id_barang,
+                "Nama Barang": item.master_barang ? item.master_barang.nama_barang : '(Data Hilang)',
+                "Kuantitas": item.kuantitas,
+                "Waktu Keluar": formatTanggal(item.tanggal) // Tampilkan jam juga
+            }));
+            const wsMasuk = XLSX.utils.json_to_sheet(dataMasukFormatted);
+            const wsKeluar = XLSX.utils.json_to_sheet(dataKeluarFormatted);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsMasuk, "Barang Masuk");
+            XLSX.utils.book_append_sheet(wb, wsKeluar, "Barang Keluar");
+            XLSX.writeFile(wb, "Laporan_Stok_Redesma.xlsx");
+            showMessage("Laporan Excel berhasil diunduh!", false);
         }
 
-        // === Fungsi Logika Utama ===
-
+        // === Logic ===
         async function loadMasterBarang() {
             console.log("Fetching master barang...");
             try {
                 const { data, error } = await db.from('master_barang').select('*').order('id_barang', { ascending: true });
                 if (error) throw error;
-                masterBarangList = data; 
-                renderMasterBarangTable(masterBarangList);
-                populateDropdowns(masterBarangList);
-            } catch (error) {
-                console.error("Error fetching master barang:", error);
-                showMessage(`Gagal memuat master barang: ${error.message}`, true);
-            }
+                masterBarangList = data; renderMasterBarangTable(masterBarangList); populateDropdowns(masterBarangList);
+            } catch (error) { showMessage(`Gagal memuat master barang: ${error.message}`, true); }
         }
-
-        /** (DIUBAH) Fetch data dan simpan di cache */
         async function fetchTransactionData() {
             console.log("Fetching transaction data...");
             try {
@@ -778,480 +506,191 @@
                 ]);
                 if (masukResponse.error) throw masukResponse.error;
                 if (keluarResponse.error) throw keluarResponse.error;
-
-                allBarangMasuk = masukResponse.data; // Simpan ke cache
-                allBarangKeluar = keluarResponse.data; // Simpan ke cache
-
-                updateChart(allBarangMasuk, allBarangKeluar); // Update chart (pakai data penuh)
-                filterTables(); // Render tabel (pakai data terfilter)
-
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                showMessage(`Gagal memuat data transaksi: ${error.message}`, true);
-            }
+                allBarangMasuk = masukResponse.data; allBarangKeluar = keluarResponse.data; 
+                updateChart(allBarangMasuk, allBarangKeluar); filterTables(); 
+            } catch (error) { showMessage(`Gagal memuat data transaksi: ${error.message}`, true); }
         }
-        
-        /** Mengatur listener data real-time (dari V4) */
         function setupDataListeners() {
             if (realtimeChannel) { realtimeChannel.unsubscribe(); }
-            console.log("Setting up realtime listeners...");
-            
             realtimeChannel = db.channel('public-changes')
-                .on('postgres_changes', { 
-                    event: '*', 
-                    schema: 'public', 
-                    table: 'master_barang' 
-                }, (payload) => {
-                    console.log('Perubahan master_barang terdeteksi!', payload);
-                    showMessage("Data master barang berubah, memuat ulang...", false);
-                    loadMasterBarang();
-                    fetchTransactionData(); // (BARU) Panggil juga ini
-                })
-                .on('postgres_changes', { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'barang_masuk' 
-                }, (payload) => {
-                    console.log('Perubahan barang_masuk terdeteksi!', payload);
-                    showMessage("Data masuk baru terdeteksi, memuat ulang...", false);
-                    fetchTransactionData();
-                })
-                .on('postgres_changes', { 
-                    event: 'INSERT', 
-                    schema: 'public', 
-                    table: 'barang_keluar' 
-                }, (payload) => {
-                    console.log('Perubahan barang_keluar terdeteksi!', payload);
-                    showMessage("Data keluar baru terdeteksi, memuat ulang...", false);
-                    fetchTransactionData();
-                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'master_barang' }, (payload) => { showMessage("Data master barang berubah, memuat ulang...", false); loadMasterBarang(); fetchTransactionData(); })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'barang_masuk' }, (payload) => { showMessage("Data masuk baru terdeteksi, memuat ulang...", false); fetchTransactionData(); })
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'barang_keluar' }, (payload) => { showMessage("Data keluar baru terdeteksi, memuat ulang...", false); fetchTransactionData(); })
                 .subscribe();
         }
-
         function cleanupListeners() {
-            if (realtimeChannel) {
-                realtimeChannel.unsubscribe();
-                realtimeChannel = null;
-                console.log("Realtime listeners stopped.");
-            }
-            masterBarangList = [];
-            allBarangMasuk = []; // (BARU) Bersihkan cache
-            allBarangKeluar = []; // (BARU) Bersihkan cache
+            if (realtimeChannel) { realtimeChannel.unsubscribe(); realtimeChannel = null; }
+            masterBarangList = []; allBarangMasuk = []; allBarangKeluar = []; 
         }
 
-        // === Fungsi Render ===
-        
+        // === Render ===
         function renderMasterBarangTable(data) {
             tableMasterBarang.innerHTML = '';
-            if (!data || data.length === 0) {
-                tableMasterBarang.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-500">Belum ada master barang</td></tr>';
-                return;
-            }
+            if (!data || data.length === 0) { tableMasterBarang.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-500">Belum ada master barang</td></tr>'; return; }
             data.forEach(item => {
-                const row = `
-                    <tr>
-                        <td class="font-medium">${item.id_barang}</td>
-                        <td>${item.nama_barang}</td>
-                        <td>
-                            <button class="delete-btn p-1 text-red-600 hover:text-red-800" data-id="${item.id_barang}" title="Hapus ${item.nama_barang}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                const row = `<tr><td class="font-medium">${item.id_barang}</td><td>${item.nama_barang}</td><td><button class="delete-btn p-1 text-red-600 hover:text-red-800" data-id="${item.id_barang}" title="Hapus ${item.nama_barang}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button></td></tr>`;
                 tableMasterBarang.innerHTML += row;
             });
-            tableMasterBarang.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', handleDeleteMasterBarang);
-            });
+            tableMasterBarang.querySelectorAll('.delete-btn').forEach(button => { button.addEventListener('click', handleDeleteMasterBarang); });
         }
-        
         function populateDropdowns(data) {
-            selectMasukId.innerHTML = '';
-            selectKeluarId.innerHTML = '';
-            if (!data || data.length === 0) {
-                const noDataOption = '<option value="">Tambah Master Barang dulu</option>';
-                selectMasukId.innerHTML = noDataOption;
-                selectKeluarId.innerHTML = noDataOption;
-                return;
-            }
+            selectMasukId.innerHTML = ''; selectKeluarId.innerHTML = '';
+            if (!data || data.length === 0) { const noDataOption = '<option value="">Tambah Master Barang dulu</option>'; selectMasukId.innerHTML = noDataOption; selectKeluarId.innerHTML = noDataOption; return; }
             const defaultOption = '<option value="">-- Pilih Barang --</option>';
-            selectMasukId.innerHTML = defaultOption;
-            selectKeluarId.innerHTML = defaultOption;
-            data.forEach(item => {
-                const option = `<option value="${item.id_barang}">${item.id_barang} - ${item.nama_barang}</option>`;
-                selectMasukId.innerHTML += option;
-                selectKeluarId.innerHTML += option;
-            });
+            selectMasukId.innerHTML = defaultOption; selectKeluarId.innerHTML = defaultOption;
+            data.forEach(item => { const option = `<option value="${item.id_barang}">${item.id_barang} - ${item.nama_barang}</option>`; selectMasukId.innerHTML += option; selectKeluarId.innerHTML += option; });
         }
-        
-        /** (DIUBAH) Render tabel dari data (bisa data cache terfilter) */
         function renderTabelMasuk(data) {
             tableBarangMasuk.innerHTML = '';
-            if (!data || data.length === 0) {
-                tableBarangMasuk.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Tidak ada data (sesuai filter)</td></tr>';
-                return;
-            }
+            if (!data || data.length === 0) { tableBarangMasuk.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Tidak ada data (sesuai filter)</td></tr>'; return; }
             data.forEach((item, index) => {
                 const namaBarang = item.master_barang ? item.master_barang.nama_barang : '(Data Hilang)';
-                const row = `
-                    <tr>
-                        <td class="font-medium">${index + 1}</td>
-                        <td class="font-medium">${item.id_barang}</td>
-                        <td>${namaBarang}</td>
-                        <td><span class="badge badge-success">+${item.kuantitas}</span></td>
-                        <td class="text-sm text-gray-500">${formatTanggal(item.tanggal)}</td>
-                    </tr>
-                `;
+                const row = `<tr><td class="font-medium">${index + 1}</td><td class="font-medium">${item.id_barang}</td><td>${namaBarang}</td><td><span class="badge badge-success">+${item.kuantitas}</span></td><td class="text-sm text-gray-500">${formatTanggal(item.tanggal)}</td></tr>`;
                 tableBarangMasuk.innerHTML += row;
             });
         }
-        
-        /** (DIUBAH) Render tabel dari data (bisa data cache terfilter) */
         function renderTabelKeluar(data) {
             tableBarangKeluar.innerHTML = '';
-            if (!data || data.length === 0) {
-                tableBarangKeluar.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Tidak ada data (sesuai filter)</td></tr>';
-                return;
-            }
+            if (!data || data.length === 0) { tableBarangKeluar.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Tidak ada data (sesuai filter)</td></tr>'; return; }
             data.forEach((item, index) => {
                 const namaBarang = item.master_barang ? item.master_barang.nama_barang : '(Data Hilang)';
-                const row = `
-                    <tr>
-                        <td class="font-medium">${index + 1}</td>
-                        <td class="font-medium">${item.id_barang}</td>
-                        <td>${namaBarang}</td>
-                        <td><span class="badge badge-error">-${item.kuantitas}</span></td>
-                        <td class="text-sm text-gray-500">${formatTanggal(item.tanggal)}</td>
-                    </tr>
-                `;
+                const row = `<tr><td class="font-medium">${index + 1}</td><td class="font-medium">${item.id_barang}</td><td>${namaBarang}</td><td><span class="badge badge-error">-${item.kuantitas}</span></td><td class="text-sm text-gray-500">${formatTanggal(item.tanggal)}</td></tr>`;
                 tableBarangKeluar.innerHTML += row;
             });
         }
-
-        /** (DIUBAH) Mengupdate chart, info board, dan warna dark mode */
         function updateChart(dataMasuk, dataKeluar) {
             const stokAkhir = {};
-            (dataMasuk || []).forEach(item => {
-                const id = item.id_barang.toUpperCase();
-                stokAkhir[id] = (stokAkhir[id] || 0) + item.kuantitas;
-            });
-            (dataKeluar || []).forEach(item => {
-                const id = item.id_barang.toUpperCase();
-                stokAkhir[id] = (stokAkhir[id] || 0) - item.kuantitas;
-            });
-
+            (dataMasuk || []).forEach(item => { const id = item.id_barang.toUpperCase(); stokAkhir[id] = (stokAkhir[id] || 0) + item.kuantitas; });
+            (dataKeluar || []).forEach(item => { const id = item.id_barang.toUpperCase(); stokAkhir[id] = (stokAkhir[id] || 0) - item.kuantitas; });
             const sortedLabels = Object.keys(stokAkhir).sort();
-            const labels = sortedLabels.map(id => {
-                const master = masterBarangList.find(m => m.id_barang === id);
-                return master ? `${id} (${master.nama_barang})` : id;
-            });
+            const labels = sortedLabels.map(id => { const master = masterBarangList.find(m => m.id_barang === id); return master ? `${id} (${master.nama_barang})` : id; });
             const data = sortedLabels.map(id => stokAkhir[id]);
-
-            // (BARU) Update Papan Info
-            const totalJenis = masterBarangList.length;
-            const totalStok = data.reduce((a, b) => a + b, 0);
-            const stokHabis = data.filter(stok => stok <= 0).length;
-            
-            infoJenisBarang.textContent = totalJenis;
-            infoTotalStok.textContent = totalStok;
-            infoStokHabis.textContent = stokHabis;
-            
-            if (currentChart) {
-                currentChart.destroy();
-            }
-
-            // (BARU) Deteksi dark mode dari class HTML
+            const totalJenis = masterBarangList.length; const totalStok = data.reduce((a, b) => a + b, 0); const stokHabis = data.filter(stok => stok <= 0).length;
+            infoJenisBarang.textContent = totalJenis; infoTotalStok.textContent = totalStok; infoStokHabis.textContent = stokHabis;
+            if (currentChart) { currentChart.destroy(); }
             const isDarkMode = document.documentElement.classList.contains('dark');
-            const chartFontColor = isDarkMode ? '#E5E7EB' : '#374151'; 
-            const chartGridColor = isDarkMode ? '#374151' : '#E5E7EB';
-            
+            const chartFontColor = isDarkMode ? '#E5E7EB' : '#374151'; const chartGridColor = isDarkMode ? '#374151' : '#E5E7EB';
             currentChart = new Chart(chartCanvas, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Stok Barang Saat Ini',
-                        data: data,
-                        backgroundColor: 'rgba(37, 99, 235, 0.7)',
-                        borderColor: 'rgba(37, 99, 235, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { 
-                        y: { 
-                            beginAtZero: true,
-                            ticks: { color: chartFontColor }, // (DIUBAH)
-                            grid: { color: chartGridColor } // (DIUBAH)
-                        },
-                        x: {
-                            ticks: { color: chartFontColor }, // (DIUBAH)
-                            grid: { display: false }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: chartFontColor } // (DIUBAH)
-                        }
-                    }
-                }
+                type: 'bar', data: { labels: labels, datasets: [{ label: 'Stok Barang Saat Ini', data: data, backgroundColor: 'rgba(37, 99, 235, 0.7)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: chartFontColor }, grid: { color: chartGridColor } }, x: { ticks: { color: chartFontColor }, grid: { display: false } } }, plugins: { legend: { labels: { color: chartFontColor } } } }
             });
         }
 
-
-        // === Event Listener ===
-
-        // (DIUBAH) Listener Status Autentikasi
+        // === Event Listeners ===
         db.auth.onAuthStateChange((event, session) => {
             if (session) {
-                // --- KONDISI SAAT LOGIN BERHASIL ---
                 const user = session.user;
-                console.log("User logged in:", user.email);
-                authContainer.classList.add('hidden');
-                dashboardContainer.classList.remove('hidden');
-                userEmailDisplay.textContent = user.email;
-                
-                setDefaultDates(); // (BARU)
-                loadMasterBarang();
-                fetchTransactionData();
-                setupDataListeners();
-                
-                // (BARU) Tambahkan listener untuk tema & filter
+                loginBg.style.display = 'none'; loginBgOverlay.style.display = 'none';
+                authContainer.classList.add('hidden'); dashboardContainer.classList.remove('hidden'); userEmailDisplay.textContent = user.email;
+                setDefaultDates(); loadMasterBarang(); fetchTransactionData(); setupDataListeners(); updateClock();
                 themeToggleBtn.addEventListener('click', toggleTheme);
+                downloadExcelBtn.addEventListener('click', downloadExcel); 
                 filterBtn.addEventListener('click', filterTables);
-                resetFilterBtn.addEventListener('click', () => {
-                    searchBar.value = '';
-                    filterTanggalMulai.value = '';
-                    filterTanggalAkhir.value = '';
-                    filterTables(); // Terapkan filter kosong (reset)
-                });
-                // (BARU) Listener untuk search bar
+                resetFilterBtn.addEventListener('click', () => { searchBar.value = ''; filterTanggalMulai.value = ''; filterTanggalAkhir.value = ''; filterTables(); });
                 searchBar.addEventListener('input', filterTables);
-
             } else {
-                // --- KONDISI SAAT LOGOUT BERHASIL ---
-                console.log("User logged out");
-                authContainer.classList.remove('hidden');
-                dashboardContainer.classList.add('hidden');
-                userEmailDisplay.textContent = '';
-                
-                cleanupListeners();
-                
-                if (currentChart) currentChart.destroy();
+                loginBg.style.display = 'block'; loginBgOverlay.style.display = 'block';
+                authContainer.classList.remove('hidden'); dashboardContainer.classList.add('hidden'); userEmailDisplay.textContent = '';
+                cleanupListeners(); if (currentChart) currentChart.destroy();
                 tableBarangMasuk.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Silakan login</td></tr>';
                 tableBarangKeluar.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Silakan login</td></tr>';
                 tableMasterBarang.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-500">Silakan login</td></tr>';
-                
-                // (PENTING) Hapus listener agar tidak menumpuk saat login kembali
-                themeToggleBtn.removeEventListener('click', toggleTheme);
-                filterBtn.removeEventListener('click', filterTables);
-                resetFilterBtn.removeEventListener('click', () => {}); // Hapus listener
-                searchBar.removeEventListener('input', filterTables); // Hapus listener
+                themeToggleBtn.removeEventListener('click', toggleTheme); downloadExcelBtn.removeEventListener('click', downloadExcel); 
+                filterBtn.removeEventListener('click', filterTables); resetFilterBtn.removeEventListener('click', () => {}); searchBar.removeEventListener('input', filterTables); 
             }
             loadingSpinner.classList.add('hidden');
         });
 
-        // Listener Halaman Auth (dari V4)
-        showRegisterLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loginForm.classList.add('hidden');
-            registerForm.classList.remove('hidden');
-        });
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            registerForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
-        });
+        showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); loginForm.classList.add('hidden'); registerForm.classList.remove('hidden'); });
+        showLoginLink.addEventListener('click', (e) => { e.preventDefault(); registerForm.classList.add('hidden'); loginForm.classList.remove('hidden'); });
         
-        // (DIHAPUS) Listener searchBar.addEventListener('input', filterTables);
-        // Dipindahkan ke dalam onAuthStateChange agar tidak error saat user logout
-
-        // Listener Form Auth (dari V4)
         registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
+            e.preventDefault(); const email = document.getElementById('register-email').value; const password = document.getElementById('register-password').value;
             loadingSpinner.classList.remove('hidden');
-            try {
-                const { error } = await db.auth.signUp({ email, password });
-                if (error) throw error;
-                showMessage("Akun berhasil dibuat! Silakan cek email Anda untuk konfirmasi.", false);
-            } catch (error) {
-                showMessage(`Gagal mendaftar: ${error.message}`, true);
-            } finally {
-                loadingSpinner.classList.add('hidden');
-            }
+            try { const { error } = await db.auth.signUp({ email, password }); if (error) throw error; showMessage("Akun berhasil dibuat! Silakan cek email.", false); } 
+            catch (error) { showMessage(`Gagal mendaftar: ${error.message}`, true); } finally { loadingSpinner.classList.add('hidden'); }
         });
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+            e.preventDefault(); const email = document.getElementById('login-email').value; const password = document.getElementById('login-password').value;
             loadingSpinner.classList.remove('hidden');
-            try {
-                const { error } = await db.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                showMessage("Login berhasil!", false);
-            } catch (error) {
-                showMessage(`Gagal login: ${error.message}`, true);
-            } finally {
-                loadingSpinner.classList.add('hidden');
-            }
+            try { const { error } = await db.auth.signInWithPassword({ email, password }); if (error) throw error; showMessage("Login berhasil!", false); } 
+            catch (error) { showMessage(`Gagal login: ${error.message}`, true); } finally { loadingSpinner.classList.add('hidden'); }
         });
-        
-        // Listener Tombol Logout (dari V4, ini sudah benar)
         logoutButton.addEventListener('click', async () => {
             loadingSpinner.classList.remove('hidden');
-            try {
-                const { error } = await db.auth.signOut();
-                if (error) throw error;
-                showMessage("Anda telah logout.", false);
-            } catch (error) {
-                showMessage(`Gagal logout: ${error.message}`, true);
-            } finally {
-                loadingSpinner.classList.add('hidden');
-            }
+            try { const { error } = await db.auth.signOut(); if (error) throw error; showMessage("Anda telah logout.", false); } 
+            catch (error) { showMessage(`Gagal logout: ${error.message}`, true); } finally { loadingSpinner.classList.add('hidden'); }
         });
 
-        // Listener Form Master (dari V4)
         formMasterBarang.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const idBarang = document.getElementById('master-id').value.toUpperCase();
-            const namaBarang = document.getElementById('master-nama').value;
-            if (!idBarang || !namaBarang) {
-                showMessage("ID Barang dan Nama Barang tidak boleh kosong.", true);
-                return;
-            }
-            try {
-                const { error } = await db.from('master_barang').insert({ 
-                    id_barang: idBarang, 
-                    nama_barang: namaBarang 
-                });
-                if (error) throw error;
-                showMessage(`Barang ${namaBarang} berhasil ditambah!`, false);
-                formMasterBarang.reset();
-            } catch (error) {
-                if (error.code === '23505') {
-                    showMessage(`Gagal: ID Barang "${idBarang}" sudah ada. Gunakan ID lain.`, true);
-                } else {
-                    showMessage(`Gagal simpan master: ${error.message}`, true);
-                }
-            }
+            e.preventDefault(); const idBarang = document.getElementById('master-id').value.toUpperCase(); const namaBarang = document.getElementById('master-nama').value;
+            if (!idBarang || !namaBarang) { showMessage("ID Barang dan Nama Barang tidak boleh kosong.", true); return; }
+            try { const { error } = await db.from('master_barang').insert({ id_barang: idBarang, nama_barang: namaBarang }); if (error) throw error; showMessage(`Barang ${namaBarang} berhasil ditambah!`, false); formMasterBarang.reset(); } 
+            catch (error) { if (error.code === '23505') { showMessage(`Gagal: ID ${idBarang} sudah ada.`, true); } else { showMessage(`Gagal simpan master: ${error.message}`, true); } }
         });
-        
-        // (Function dari V4)
         async function handleDeleteMasterBarang(e) {
-            const idBarang = e.currentTarget.dataset.id;
-            if (!idBarang) return;
-            if (!confirm(`Yakin ingin menghapus barang ${idBarang}? \n\nPERINGATAN: Ini bisa gagal jika barang ini sudah pernah digunakan di riwayat Masuk/Keluar.`)) {
-                return;
-            }
-            try {
-                const { error } = await db.from('master_barang').delete().eq('id_barang', idBarang);
-                if (error) throw error;
-                showMessage(`Barang ${idBarang} berhasil dihapus.`, false);
-            } catch (error) {
-                if (error.code === '23503') {
-                    showMessage(`Gagal hapus: Barang ${idBarang} sudah tercatat di riwayat Masuk/Keluar.`, true);
-                } else {
-                    showMessage(`Gagal hapus: ${error.message}`, true);
-                }
-            }
+            const idBarang = e.currentTarget.dataset.id; if (!idBarang) return;
+            if (!confirm(`Yakin ingin menghapus ${idBarang}?`)) return;
+            try { const { error } = await db.from('master_barang').delete().eq('id_barang', idBarang); if (error) throw error; showMessage(`Barang ${idBarang} berhasil dihapus.`, false); } 
+            catch (error) { if (error.code === '23503') { showMessage(`Gagal: Barang ${idBarang} masih ada di riwayat.`, true); } else { showMessage(`Gagal hapus: ${error.message}`, true); } }
         }
 
-        // (DIUBAH) Listener Form Barang Masuk (dengan tanggal)
+        // (DIUBAH) Submit Barang Masuk (Gabung Tanggal & Waktu)
         formBarangMasuk.addEventListener('submit', async (e) => {
             e.preventDefault();
             const idBarang = selectMasukId.value;
             const kuantitas = parseInt(document.getElementById('masuk-kuantitas').value);
-            const tanggal = document.getElementById('masuk-tanggal').value; // (BARU)
+            const tanggal = document.getElementById('masuk-tanggal').value; 
+            const waktu = document.getElementById('masuk-waktu').value;
             
-            if (!idBarang || !kuantitas || !tanggal || kuantitas <= 0) { // (DIUBAH)
-                showMessage("Silakan pilih barang, tanggal, dan kuantitas yang valid.", true); // (DIUBAH)
-                return;
+            if (!idBarang || !kuantitas || !tanggal || !waktu || kuantitas <= 0) { 
+                showMessage("Silakan lengkapi semua data.", true); return;
             }
             const { data: { user } } = await db.auth.getUser();
-            if (!user) {
-                showMessage("Sesi Anda berakhir, silakan login ulang.", true);
-                return;
-            }
+            if (!user) { showMessage("Sesi habis, login ulang.", true); return; }
+            
+            // Gabungkan Tanggal dan Waktu (YYYY-MM-DDTHH:MM)
+            const fullDateTime = `${tanggal}T${waktu}:00`;
+
             try {
-                const { error } = await db.from('barang_masuk').insert({ 
-                    id_barang: idBarang, 
-                    kuantitas: kuantitas,
-                    user_id: user.id,
-                    tanggal: tanggal // (BARU)
-                });
+                const { error } = await db.from('barang_masuk').insert({ id_barang: idBarang, kuantitas: kuantitas, user_id: user.id, tanggal: fullDateTime });
                 if (error) throw error;
-                
-                showMessage("Data barang masuk berhasil ditambah!", false);
-                formBarangMasuk.reset();
-                selectMasukId.value = "";
-                setDefaultDates(); // (BARU)
-            } catch (error) {
-                console.error("Error add barang masuk:", error);
-                showMessage(`Gagal simpan data: ${error.message}`, true);
-            }
+                showMessage("Barang masuk berhasil!", false);
+                formBarangMasuk.reset(); selectMasukId.value = ""; setDefaultDates(); 
+            } catch (error) { console.error("Error:", error); showMessage(`Gagal simpan: ${error.message}`, true); }
         });
 
-        // (DIUBAH) Listener Form Barang Keluar (dengan tanggal)
+        // (DIUBAH) Submit Barang Keluar (Gabung Tanggal & Waktu)
         formBarangKeluar.addEventListener('submit', async (e) => {
             e.preventDefault();
             const idBarang = selectKeluarId.value;
             const kuantitas = parseInt(document.getElementById('keluar-kuantitas').value);
-            const tanggal = document.getElementById('keluar-tanggal').value; // (BARU)
-            
-            if (!idBarang || !kuantitas || !tanggal || kuantitas <= 0) { // (DIUBAH)
-                showMessage("Silakan pilih barang, tanggal, dan kuantitas yang valid.", true); // (DIUBAH)
-                return;
+            const tanggal = document.getElementById('keluar-tanggal').value; 
+            const waktu = document.getElementById('keluar-waktu').value;
+
+            if (!idBarang || !kuantitas || !tanggal || !waktu || kuantitas <= 0) { 
+                showMessage("Silakan lengkapi semua data.", true); return;
             }
             const { data: { user } } = await db.auth.getUser();
-            if (!user) {
-                showMessage("Sesi Anda berakhir, silakan login ulang.", true);
-                return;
-            }
-            try {
-                // Validasi stok (dari V4)
-                const { data: dataMasuk, error: errMasuk } = await db.from('barang_masuk')
-                    .select('kuantitas')
-                    .eq('id_barang', idBarang);
-                if (errMasuk) throw errMasuk;
-                const { data: dataKeluar, error: errKeluar } = await db.from('barang_keluar')
-                    .select('kuantitas')
-                    .eq('id_barang', idBarang);
-                if (errKeluar) throw errKeluar;
+            if (!user) { showMessage("Sesi habis, login ulang.", true); return; }
+            
+            // Gabungkan Tanggal dan Waktu
+            const fullDateTime = `${tanggal}T${waktu}:00`;
 
-                let totalMasuk = 0;
-                (dataMasuk || []).forEach(item => { totalMasuk += item.kuantitas; });
-                let totalKeluar = 0;
-                (dataKeluar || []).forEach(item => { totalKeluar += item.kuantitas; });
+            try {
+                const { data: dataMasuk, error: errMasuk } = await db.from('barang_masuk').select('kuantitas').eq('id_barang', idBarang); if (errMasuk) throw errMasuk;
+                const { data: dataKeluar, error: errKeluar } = await db.from('barang_keluar').select('kuantitas').eq('id_barang', idBarang); if (errKeluar) throw errKeluar;
+                let totalMasuk = 0; (dataMasuk || []).forEach(item => { totalMasuk += item.kuantitas; });
+                let totalKeluar = 0; (dataKeluar || []).forEach(item => { totalKeluar += item.kuantitas; });
                 const stokSaatIni = totalMasuk - totalKeluar;
                 
-                if (kuantitas > stokSaatIni) {
-                    showMessage(`Gagal: Stok ${idBarang} tidak cukup. Stok saat ini: ${stokSaatIni}`, true);
-                    return;
-                }
+                if (kuantitas > stokSaatIni) { showMessage(`Gagal: Stok tidak cukup. Sisa: ${stokSaatIni}`, true); return; }
 
-                const { error } = await db.from('barang_keluar').insert({ 
-                    id_barang: idBarang, 
-                    kuantitas: kuantitas,
-                    user_id: user.id,
-                    tanggal: tanggal // (BARU)
-                });
+                const { error } = await db.from('barang_keluar').insert({ id_barang: idBarang, kuantitas: kuantitas, user_id: user.id, tanggal: fullDateTime });
                 if (error) throw error;
-                
-                showMessage("Data barang keluar berhasil ditambah!", false);
-                formBarangKeluar.reset();
-                selectKeluarId.value = "";
-                setDefaultDates(); // (BARU)
-            } catch (error) {
-                console.error("Error add barang keluar:", error);
-                showMessage(`Gagal simpan data: ${error.message}`, true);
-            }
+                showMessage("Barang keluar berhasil!", false);
+                formBarangKeluar.reset(); selectKeluarId.value = ""; setDefaultDates(); 
+            } catch (error) { console.error("Error:", error); showMessage(`Gagal simpan: ${error.message}`, true); }
         });
 
     </script>
